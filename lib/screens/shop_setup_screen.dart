@@ -57,7 +57,7 @@ class _ShopSetupScreenState extends State<ShopSetupScreen> {
             const SizedBox(height: 20),
 
             DropdownButtonFormField<String>(
-              value: _paymentMethod,
+              initialValue: _paymentMethod,
               decoration: const InputDecoration(
                 labelText: 'Payment Method',
                 border: OutlineInputBorder(),

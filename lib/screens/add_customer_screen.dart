@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/customer.dart';
+import '../models/transaction.dart';
 
 class AddCustomerScreen extends StatefulWidget {
   const AddCustomerScreen({super.key});
@@ -22,14 +23,25 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
   }
 
   void _saveDebt() {
-    if (_nameController.text.isEmpty || _amountController.text.isEmpty) {
+    final name = _nameController.text.trim();
+    final phone = _phoneController.text.trim();
+    final amount = double.tryParse(_amountController.text.trim());
+
+    if (name.isEmpty || amount == null || amount <= 0) {
       return;
     }
 
     final customer = Customer(
-      name: _nameController.text,
-      phone: _phoneController.text,
-      amount: double.tryParse(_amountController.text) ?? 0,
+      name: name,
+      phone: phone,
+      amount: amount,
+      transactions: [
+        Transaction(
+          type: 'Debt',
+          amount: amount,
+          date: DateTime.now(),
+        ),
+      ],
     );
 
     Navigator.pop(context, customer);
@@ -66,7 +78,9 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
 
             TextField(
               controller: _amountController,
-              keyboardType: TextInputType.number,
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
               decoration: const InputDecoration(
                 labelText: 'Amount Owed (KES)',
                 border: OutlineInputBorder(),
