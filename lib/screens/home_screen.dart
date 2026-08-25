@@ -23,14 +23,21 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _loadCustomers() async {
     final customers = await StorageService.loadCustomers();
 
+    if (!mounted) return;
+
     setState(() {
-      _customers.clear();
-      _customers.addAll(customers);
+      _customers
+        ..clear()
+        ..addAll(customers);
     });
   }
 
-  double get totalDebt =>
-      _customers.fold(0, (sum, customer) => sum + customer.amount);
+  double get totalDebt {
+    return _customers.fold(
+      0,
+          (sum, customer) => sum + customer.amount,
+    );
+  }
 
   Future<void> _addDebt() async {
     final customer = await Navigator.push<Customer>(
@@ -40,13 +47,13 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
 
-    if (customer != null) {
-      setState(() {
-        _customers.add(customer);
-      });
+    if (customer == null) return;
 
-      await StorageService.saveCustomers(_customers);
-    }
+    setState(() {
+      _customers.add(customer);
+    });
+
+    await StorageService.saveCustomers(_customers);
   }
 
   Future<void> _openCustomer(Customer customer) async {
@@ -61,40 +68,86 @@ class _HomeScreenState extends State<HomeScreen> {
 
     await StorageService.saveCustomers(_customers);
 
-    setState(() {});
+    if (!mounted) return;
+
+    await _loadCustomers();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('PesaBook'),
+        title: const Text(
+          'PesaBook',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        actions: [
+          IconButton(
+            onPressed: () {},
+            icon: const Icon(Icons.search),
+          ),
+        ],
       ),
+
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Total Debt',
-              style: TextStyle(fontSize: 22),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              'KES ${totalDebt.toStringAsFixed(0)}',
-              style: const TextStyle(
-                fontSize: 30,
-                fontWeight: FontWeight.bold,
-                color: Colors.red,
+            // Total money owed
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                color: Theme.of(context)
+                    .colorScheme
+                    .primaryContainer,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Money Owed to You',
+                    style: TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'KES ${totalDebt.toStringAsFixed(0)}',
+                    style: const TextStyle(
+                      fontSize: 32,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 30),
+
+            const SizedBox(height: 28),
+
+            const Text(
+              'Customers Who Owe You',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+
+            const SizedBox(height: 12),
+
             Expanded(
               child: _customers.isEmpty
                   ? const Center(
                 child: Text(
                   'No debts yet.',
-                  style: TextStyle(fontSize: 18),
+                  style: TextStyle(
+                    fontSize: 17,
+                  ),
                 ),
               )
                   : ListView.builder(
@@ -103,9 +156,22 @@ class _HomeScreenState extends State<HomeScreen> {
                   final customer = _customers[index];
 
                   return Card(
+                    margin: const EdgeInsets.only(
+                      bottom: 10,
+                    ),
                     child: ListTile(
                       onTap: () => _openCustomer(customer),
-                      title: Text(customer.name),
+                      contentPadding:
+                      const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 6,
+                      ),
+                      title: Text(
+                        customer.name,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                       subtitle: Text(
                         customer.phone.isEmpty
                             ? 'No phone number'
@@ -113,17 +179,33 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                       trailing: Text(
                         'KES ${customer.amount.toStringAsFixed(0)}',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
                       ),
                     ),
                   );
                 },
               ),
             ),
+
+            const SizedBox(height: 12),
+
+            // Add Debt button
             SizedBox(
               width: double.infinity,
-              child: ElevatedButton(
+              height: 55,
+              child: ElevatedButton.icon(
                 onPressed: _addDebt,
-                child: const Text('Add Debt'),
+                icon: const Icon(Icons.add),
+                label: const Text(
+                  'Add Debt',
+                  style: TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
             ),
           ],
