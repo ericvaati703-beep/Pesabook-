@@ -170,8 +170,8 @@ class _CustomerScreenState extends State<CustomerScreen> {
                   : ListView.builder(
                 itemCount: widget.customer.transactions.length,
                 itemBuilder: (context, index) {
-                  final transaction =
-                  widget.customer.transactions[index];
+                  final transaction = widget.customer
+                      .transactions[widget.customer.transactions.length - 1 - index];
 
                   return Card(
                     child: ListTile(
