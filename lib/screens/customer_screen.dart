@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import '../models/customer.dart';
 import '../models/transaction.dart';
-import '../services/sms_service.dart';
 import 'record_payment_screen.dart';
 import 'add_new_debt_screen.dart';
+import 'send_reminder_screen.dart';
 
 class CustomerScreen extends StatefulWidget {
   final Customer customer;
@@ -69,10 +69,13 @@ class _CustomerScreenState extends State<CustomerScreen> {
   }
 
   Future<void> _sendReminder() async {
-    await SmsService.sendReminder(
-      phoneNumber: widget.customer.phone,
-      customerName: widget.customer.name,
-      amount: widget.customer.amount,
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => SendReminderScreen(
+          customer: widget.customer,
+        ),
+      ),
     );
   }
 
@@ -170,8 +173,8 @@ class _CustomerScreenState extends State<CustomerScreen> {
                   : ListView.builder(
                 itemCount: widget.customer.transactions.length,
                 itemBuilder: (context, index) {
-                  final transaction = widget.customer
-                      .transactions[widget.customer.transactions.length - 1 - index];
+                  final transaction = widget.customer.transactions[
+                  widget.customer.transactions.length - 1 - index];
 
                   return Card(
                     child: ListTile(
