@@ -110,8 +110,7 @@ class _CustomerScreenState extends State<CustomerScreen> {
           ),
         ],
       ),
-
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -197,14 +196,18 @@ class _CustomerScreenState extends State<CustomerScreen> {
 
             const SizedBox(height: 10),
 
-            Expanded(
-              child: widget.customer.transactions.isEmpty
-                  ? const Center(
-                child: Text('No transactions yet.'),
+            if (widget.customer.transactions.isEmpty)
+              const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(20),
+                  child: Text('No transactions yet.'),
+                ),
               )
-                  : ListView.builder(
-                itemCount:
-                widget.customer.transactions.length,
+            else
+              ListView.builder(
+                itemCount: widget.customer.transactions.length,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
                 itemBuilder: (context, index) {
                   final transaction =
                   widget.customer.transactions[
@@ -235,7 +238,6 @@ class _CustomerScreenState extends State<CustomerScreen> {
                   );
                 },
               ),
-            ),
           ],
         ),
       ),
