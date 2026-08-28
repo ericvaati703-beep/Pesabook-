@@ -4,6 +4,7 @@ import '../models/transaction.dart';
 import 'record_payment_screen.dart';
 import 'add_new_debt_screen.dart';
 import 'send_reminder_screen.dart';
+import 'edit_customer_screen.dart';
 
 class CustomerScreen extends StatefulWidget {
   final Customer customer;
@@ -79,12 +80,37 @@ class _CustomerScreenState extends State<CustomerScreen> {
     );
   }
 
+  Future<void> _editCustomer() async {
+    final updatedCustomer = await Navigator.push<Customer>(
+      context,
+      MaterialPageRoute(
+        builder: (context) => EditCustomerScreen(
+          customer: widget.customer,
+        ),
+      ),
+    );
+
+    if (updatedCustomer == null) return;
+
+    if (!mounted) return;
+
+    Navigator.pop(context, updatedCustomer);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Customer Details'),
+        actions: [
+          IconButton(
+            onPressed: _editCustomer,
+            icon: const Icon(Icons.edit),
+            tooltip: 'Edit customer',
+          ),
+        ],
       ),
+
       body: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -101,15 +127,21 @@ class _CustomerScreenState extends State<CustomerScreen> {
             const SizedBox(height: 10),
 
             Text(
-              widget.customer.phone,
-              style: const TextStyle(fontSize: 18),
+              widget.customer.phone.isEmpty
+                  ? 'No phone number'
+                  : widget.customer.phone,
+              style: const TextStyle(
+                fontSize: 18,
+              ),
             ),
 
             const SizedBox(height: 30),
 
             const Text(
               'Current Balance',
-              style: TextStyle(fontSize: 18),
+              style: TextStyle(
+                fontSize: 18,
+              ),
             ),
 
             const SizedBox(height: 10),
@@ -171,10 +203,15 @@ class _CustomerScreenState extends State<CustomerScreen> {
                 child: Text('No transactions yet.'),
               )
                   : ListView.builder(
-                itemCount: widget.customer.transactions.length,
+                itemCount:
+                widget.customer.transactions.length,
                 itemBuilder: (context, index) {
-                  final transaction = widget.customer.transactions[
-                  widget.customer.transactions.length - 1 - index];
+                  final transaction =
+                  widget.customer.transactions[
+                  widget.customer.transactions.length -
+                      1 -
+                      index
+                  ];
 
                   return Card(
                     child: ListTile(
@@ -183,11 +220,16 @@ class _CustomerScreenState extends State<CustomerScreen> {
                             ? Icons.add_circle
                             : Icons.remove_circle,
                       ),
-                      title: Text(transaction.type),
+                      title: Text(
+                        transaction.type,
+                      ),
                       subtitle: Text(
                         'KES ${transaction.amount.toStringAsFixed(0)}\n'
-                            '${transaction.date.day}/${transaction.date.month}/${transaction.date.year} '
-                            '${transaction.date.hour}:${transaction.date.minute.toString().padLeft(2, '0')}',
+                            '${transaction.date.day}/'
+                            '${transaction.date.month}/'
+                            '${transaction.date.year} '
+                            '${transaction.date.hour}:'
+                            '${transaction.date.minute.toString().padLeft(2, '0')}',
                       ),
                     ),
                   );

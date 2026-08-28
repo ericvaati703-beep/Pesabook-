@@ -58,7 +58,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _openCustomer(Customer customer) async {
-    await Navigator.push(
+    final updatedCustomer = await Navigator.push<Customer>(
       context,
       MaterialPageRoute(
         builder: (context) => CustomerScreen(
@@ -67,13 +67,24 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
 
-    await StorageService.saveCustomers(_customers);
+    if (updatedCustomer != null) {
+      final index = _customers.indexOf(customer);
+
+      if (index != -1) {
+        setState(() {
+          _customers[index] = updatedCustomer;
+        });
+      }
+
+      await StorageService.saveCustomers(_customers);
+    } else {
+      await StorageService.saveCustomers(_customers);
+    }
 
     if (!mounted) return;
 
-    await _loadCustomers();
+    setState(() {});
   }
-
   Future<void> _openShopSettings() async {
     await Navigator.push(
       context,
