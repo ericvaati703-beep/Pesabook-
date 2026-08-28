@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/shop.dart';
-
+import '../services/storage_service.dart';
+import 'home_screen.dart';
 class ShopSetupScreen extends StatefulWidget {
   const ShopSetupScreen({super.key});
 
@@ -21,19 +22,39 @@ class _ShopSetupScreenState extends State<ShopSetupScreen> {
     super.dispose();
   }
 
-  void _saveShop() {
-    if (_shopNameController.text.isEmpty ||
-        _paymentNumberController.text.isEmpty) {
+  Future<void> _saveShop() async {
+    if (_shopNameController.text.trim().isEmpty ||
+        _paymentNumberController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please fill in all fields.'),
+        ),
+      );
       return;
     }
 
     final shop = Shop(
-      name: _shopNameController.text,
+      name: _shopNameController.text.trim(),
       paymentMethod: _paymentMethod,
-      paymentNumber: _paymentNumberController.text,
+      paymentNumber: _paymentNumberController.text.trim(),
     );
 
-    Navigator.pop(context, shop);
+    await StorageService.saveShop(shop);
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Shop details saved.'),
+      ),
+    );
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const HomeScreen(),
+      ),
+    );
   }
 
   @override
@@ -77,8 +98,10 @@ class _ShopSetupScreenState extends State<ShopSetupScreen> {
                 ),
               ],
               onChanged: (value) {
+                if (value == null) return;
+
                 setState(() {
-                  _paymentMethod = value!;
+                  _paymentMethod = value;
                 });
               },
             ),

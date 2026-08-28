@@ -4,9 +4,15 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/customer.dart';
 import '../models/transaction.dart';
+import '../models/shop.dart';
 
 class StorageService {
   static const String customersKey = 'customers';
+  static const String shopKey = 'shop';
+
+  // =========================
+  // CUSTOMER STORAGE
+  // =========================
 
   static Future<void> saveCustomers(List<Customer> customers) async {
     final prefs = await SharedPreferences.getInstance();
@@ -57,5 +63,39 @@ class StorageService {
         }).toList(),
       );
     }).toList();
+  }
+
+  // =========================
+  // SHOP STORAGE
+  // =========================
+
+  static Future<void> saveShop(Shop shop) async {
+    final prefs = await SharedPreferences.getInstance();
+
+    final data = {
+      'name': shop.name,
+      'paymentMethod': shop.paymentMethod,
+      'paymentNumber': shop.paymentNumber,
+    };
+
+    await prefs.setString(
+      shopKey,
+      jsonEncode(data),
+    );
+  }
+
+  static Future<Shop?> loadShop() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    final jsonString = prefs.getString(shopKey);
+
+    if (jsonString == null) {
+      return null;
+    }
+
+    final Map<String, dynamic> decoded =
+    jsonDecode(jsonString);
+
+    return Shop.fromJson(decoded);
   }
 }

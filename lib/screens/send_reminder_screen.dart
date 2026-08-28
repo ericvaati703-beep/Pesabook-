@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../models/customer.dart';
+import '../models/shop.dart';
 import '../services/sms_service.dart';
+import '../services/storage_service.dart';
 
 class SendReminderScreen extends StatefulWidget {
   final Customer customer;
@@ -17,20 +19,58 @@ class SendReminderScreen extends StatefulWidget {
 class _SendReminderScreenState extends State<SendReminderScreen> {
   late final TextEditingController _messageController;
 
-  String get _defaultMessage {
-    return SmsService.createReminderMessage(
-      customerName: widget.customer.name,
-      amount: widget.customer.amount,
-    );
-  }
+  Shop? _shop;
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
 
-    _messageController = TextEditingController(
-      text: _defaultMessage,
-    );
+    _messageController = TextEditingController();
+
+    _loadShop();
+  }
+
+  Future<void> _loadShop() async {
+    final shop = await StorageService.loadShop();
+
+    if (!mounted) return;
+
+    setState(() {
+      _shop = shop;
+      _isLoading = false;
+
+      _messageController.text = _createDefaultMessage();
+    });
+  }
+
+  String _createDefaultMessage() {
+    final customerName = widget.customer.name;
+    final amount = widget.customer.amount.toStringAsFixed(0);
+
+    String message = 'Hello $customerName, ';
+
+    if (_shop != null) {
+      message +=
+      'this is a friendly reminder from ${_shop!.name} that you have ';
+    } else {
+      message +=
+      'this is a friendly reminder that you have ';
+    }
+
+    message += 'an outstanding balance of KES $amount.';
+
+    if (_shop != null) {
+      message +=
+      ' Please pay via ${_shop!.paymentMethod} '
+          '${_shop!.paymentNumber}.';
+    } else {
+      message += ' Please pay when you can.';
+    }
+
+    message += ' Thank you.';
+
+    return message;
   }
 
   @override
@@ -41,7 +81,7 @@ class _SendReminderScreenState extends State<SendReminderScreen> {
 
   void _resetMessage() {
     setState(() {
-      _messageController.text = _defaultMessage;
+      _messageController.text = _createDefaultMessage();
     });
   }
 
@@ -74,6 +114,17 @@ class _SendReminderScreenState extends State<SendReminderScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text('Send Reminder'),
+        ),
+        body: const Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Send Reminder'),
@@ -100,6 +151,16 @@ class _SendReminderScreenState extends State<SendReminderScreen> {
                 fontSize: 18,
               ),
             ),
+
+            if (_shop != null) ...[
+              const SizedBox(height: 8),
+              Text(
+                'Payment: ${_shop!.paymentMethod} ${_shop!.paymentNumber}',
+                style: const TextStyle(
+                  fontSize: 16,
+                ),
+              ),
+            ],
 
             const SizedBox(height: 25),
 
