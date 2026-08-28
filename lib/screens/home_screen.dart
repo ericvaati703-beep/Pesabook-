@@ -3,6 +3,7 @@ import '../models/customer.dart';
 import '../services/storage_service.dart';
 import 'add_customer_screen.dart';
 import 'customer_screen.dart';
+import 'shop_setup_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -73,6 +74,19 @@ class _HomeScreenState extends State<HomeScreen> {
     await _loadCustomers();
   }
 
+  Future<void> _openShopSettings() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const ShopSetupScreen(),
+      ),
+    );
+
+    if (!mounted) return;
+
+    setState(() {});
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -87,6 +101,12 @@ class _HomeScreenState extends State<HomeScreen> {
           IconButton(
             onPressed: () {},
             icon: const Icon(Icons.search),
+            tooltip: 'Search customers',
+          ),
+          IconButton(
+            onPressed: _openShopSettings,
+            icon: const Icon(Icons.settings),
+            tooltip: 'Shop settings',
           ),
         ],
       ),
@@ -96,7 +116,6 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Total money owed
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(24),
@@ -192,7 +211,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
             const SizedBox(height: 12),
 
-            // Add Debt button
             SizedBox(
               width: double.infinity,
               height: 55,

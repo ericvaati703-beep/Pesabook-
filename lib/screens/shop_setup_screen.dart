@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/shop.dart';
 import '../services/storage_service.dart';
 import 'home_screen.dart';
+
 class ShopSetupScreen extends StatefulWidget {
   const ShopSetupScreen({super.key});
 
@@ -14,6 +15,29 @@ class _ShopSetupScreenState extends State<ShopSetupScreen> {
   final _paymentNumberController = TextEditingController();
 
   String _paymentMethod = 'Till Number';
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadShop();
+  }
+
+  Future<void> _loadShop() async {
+    final shop = await StorageService.loadShop();
+
+    if (!mounted) return;
+
+    if (shop != null) {
+      _shopNameController.text = shop.name;
+      _paymentNumberController.text = shop.paymentNumber;
+      _paymentMethod = shop.paymentMethod;
+    }
+
+    setState(() {
+      _isLoading = false;
+    });
+  }
 
   @override
   void dispose() {
@@ -59,9 +83,25 @@ class _ShopSetupScreenState extends State<ShopSetupScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text('Shop Setup'),
+        ),
+        body: const Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    final hasExistingShop =
+        _shopNameController.text.trim().isNotEmpty;
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Shop Setup'),
+        title: Text(
+          hasExistingShop ? 'Shop Settings' : 'Shop Setup',
+        ),
       ),
       body: Padding(
         padding: const EdgeInsets.all(20),
@@ -123,7 +163,11 @@ class _ShopSetupScreenState extends State<ShopSetupScreen> {
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: _saveShop,
-                child: const Text('Save Shop'),
+                child: Text(
+                  hasExistingShop
+                      ? 'Save Changes'
+                      : 'Save Shop',
+                ),
               ),
             ),
           ],
