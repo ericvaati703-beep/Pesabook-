@@ -1,26 +1,48 @@
 import 'package:url_launcher/url_launcher.dart';
 
 class SmsService {
-  /// Creates the default reminder message.
   static String createReminderMessage({
     required String customerName,
     required double amount,
+    String? shopName,
+    String? paymentMethod,
+    String? paymentNumber,
+    String? accountNumber,
   }) {
-    return 'Hello $customerName, this is a friendly reminder that you have an outstanding balance of KES ${amount.toStringAsFixed(0)}. Please pay when you can. Thank you.';
+    String message =
+        'Hello $customerName, this is a friendly reminder that you have '
+        'an outstanding balance of KES ${amount.toStringAsFixed(0)}.';
+
+    if (shopName != null && shopName.trim().isNotEmpty) {
+      message += '\n\n$shopName';
+    }
+
+    if (paymentMethod == 'M-Pesa Till Number') {
+      message += '\nTill Number: $paymentNumber';
+    } else if (paymentMethod == 'M-Pesa PayBill') {
+      message += '\nPayBill Business Number: $paymentNumber';
+
+      if (accountNumber != null && accountNumber.trim().isNotEmpty) {
+        message += '\nAccount Number: $accountNumber';
+      }
+    } else if (paymentMethod == 'Pochi la Biashara') {
+      message += '\nPochi la Biashara: $paymentNumber';
+    } else if (paymentMethod == 'Phone Number') {
+      message += '\nPhone Number: $paymentNumber';
+    }
+
+    message += '\n\nPlease pay when you can. Thank you.';
+
+    return message;
   }
 
-  /// Opens the SMS app with a custom message.
   static Future<void> sendCustomMessage({
     required String phoneNumber,
     required String message,
   }) async {
-    if (phoneNumber.trim().isEmpty) {
-      return;
-    }
-
     final Uri smsUri = Uri(
       scheme: 'sms',
-      path: phoneNumber.trim(),
+      path: phoneNumber,
       queryParameters: {
         'body': message,
       },
@@ -31,20 +53,30 @@ class SmsService {
     }
   }
 
-  /// Opens the SMS app with the default reminder message.
-  static Future<void> sendReminder({
+  static Future<void> sendWhatsAppMessage({
     required String phoneNumber,
-    required String customerName,
-    required double amount,
+    required String message,
   }) async {
-    final message = createReminderMessage(
-      customerName: customerName,
-      amount: amount,
+    String cleanNumber = phoneNumber.replaceAll(
+      RegExp(r'[^\d+]'),
+      '',
     );
 
-    await sendCustomMessage(
-      phoneNumber: phoneNumber,
-      message: message,
+    if (cleanNumber.startsWith('0')) {
+      cleanNumber = '+254${cleanNumber.substring(1)}';
+    }
+
+    cleanNumber = cleanNumber.replaceFirst('+', '');
+
+    final Uri whatsappUri = Uri.parse(
+      'https://wa.me/$cleanNumber?text=${Uri.encodeComponent(message)}',
     );
+
+    if (await canLaunchUrl(whatsappUri)) {
+      await launchUrl(
+        whatsappUri,
+        mode: LaunchMode.externalApplication,
+      );
+    }
   }
 }

@@ -10,10 +10,6 @@ class StorageService {
   static const String customersKey = 'customers';
   static const String shopKey = 'shop';
 
-  // =========================
-  // CUSTOMER STORAGE
-  // =========================
-
   static Future<void> saveCustomers(List<Customer> customers) async {
     final prefs = await SharedPreferences.getInstance();
 
@@ -65,22 +61,12 @@ class StorageService {
     }).toList();
   }
 
-  // =========================
-  // SHOP STORAGE
-  // =========================
-
   static Future<void> saveShop(Shop shop) async {
     final prefs = await SharedPreferences.getInstance();
 
-    final data = {
-      'name': shop.name,
-      'paymentMethod': shop.paymentMethod,
-      'paymentNumber': shop.paymentNumber,
-    };
-
     await prefs.setString(
       shopKey,
-      jsonEncode(data),
+      jsonEncode(shop.toJson()),
     );
   }
 
