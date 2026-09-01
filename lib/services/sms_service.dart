@@ -1,6 +1,11 @@
+import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class SmsService {
+  static const MethodChannel _smsChannel =
+  MethodChannel('com.example.pesabook1/sms');
+
   static String createReminderMessage({
     required String customerName,
     required double amount,
@@ -36,23 +41,59 @@ class SmsService {
     return message;
   }
 
+  /// Opens the Android default Messages/SMS app.
   static Future<void> sendCustomMessage({
     required String phoneNumber,
     required String message,
   }) async {
+    final cleanNumber = phoneNumber.trim();
+
+    if (cleanNumber.isEmpty) {
+      return;
+    }
+
+    // Android: use the native SMS intent.
+    if (defaultTargetPlatform == TargetPlatform.android) {
+      try {
+        final bool opened = await _smsChannel.invokeMethod<bool>(
+          'openSms',
+          {
+            'phoneNumber': cleanNumber,
+            'message': message,
+          },
+        ) ??
+            false;
+
+        if (opened) {
+          return;
+        }
+      } catch (e) {
+        // Fall through to the normal sms: URL.
+      }
+    }
+
+    // Fallback for other platforms such as Chrome.
     final Uri smsUri = Uri(
       scheme: 'sms',
-      path: phoneNumber,
+      path: cleanNumber,
       queryParameters: {
         'body': message,
       },
     );
 
-    if (await canLaunchUrl(smsUri)) {
-      await launchUrl(smsUri);
+    try {
+      if (await canLaunchUrl(smsUri)) {
+        await launchUrl(
+          smsUri,
+          mode: LaunchMode.externalApplication,
+        );
+      }
+    } catch (e) {
+      // SMS application could not be opened.
     }
   }
 
+  /// Opens WhatsApp with the customer's number and message.
   static Future<void> sendWhatsAppMessage({
     required String phoneNumber,
     required String message,
@@ -62,21 +103,26 @@ class SmsService {
       '',
     );
 
+    // Convert Kenyan numbers such as 0720592354
+    // to international format 25472059354.
     if (cleanNumber.startsWith('0')) {
-      cleanNumber = '+254${cleanNumber.substring(1)}';
+      cleanNumber = '254${cleanNumber.substring(1)}';
+    } else if (cleanNumber.startsWith('+')) {
+      cleanNumber = cleanNumber.substring(1);
     }
 
-    cleanNumber = cleanNumber.replaceFirst('+', '');
-
     final Uri whatsappUri = Uri.parse(
-      'https://wa.me/$cleanNumber?text=${Uri.encodeComponent(message)}',
+      'https://wa.me/$cleanNumber'
+          '?text=${Uri.encodeComponent(message)}',
     );
 
-    if (await canLaunchUrl(whatsappUri)) {
+    try {
       await launchUrl(
         whatsappUri,
         mode: LaunchMode.externalApplication,
       );
+    } catch (e) {
+      // WhatsApp could not be opened.
     }
   }
 }
