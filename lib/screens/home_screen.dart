@@ -15,10 +15,25 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final List<Customer> _customers = [];
 
+  bool _isSearching = false;
+  final TextEditingController _searchController = TextEditingController();
+
   @override
   void initState() {
     super.initState();
     _loadCustomers();
+    _searchController.addListener(_onSearchChanged);
+  }
+
+  @override
+  void dispose() {
+    _searchController.removeListener(_onSearchChanged);
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _onSearchChanged() {
+    setState(() {});
   }
 
   Future<void> _loadCustomers() async {
@@ -38,6 +53,21 @@ class _HomeScreenState extends State<HomeScreen> {
       0,
           (sum, customer) => sum + customer.amount,
     );
+  }
+
+  List<Customer> get _filteredCustomers {
+    final query = _searchController.text.trim().toLowerCase();
+
+    if (query.isEmpty) {
+      return _customers;
+    }
+
+    return _customers.where((customer) {
+      final name = customer.name.toLowerCase();
+      final phone = customer.phone.toLowerCase();
+
+      return name.contains(query) || phone.contains(query);
+    }).toList();
   }
 
   Future<void> _addDebt() async {
@@ -85,6 +115,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     setState(() {});
   }
+
   Future<void> _openShopSettings() async {
     await Navigator.push(
       context,
@@ -98,77 +129,123 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() {});
   }
 
+  void _startSearch() {
+    setState(() {
+      _isSearching = true;
+    });
+  }
+
+  void _closeSearch() {
+    _searchController.clear();
+
+    setState(() {
+      _isSearching = false;
+    });
+
+    FocusScope.of(context).unfocus();
+  }
+
   @override
   Widget build(BuildContext context) {
+    final displayedCustomers = _filteredCustomers;
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
+        title: _isSearching
+            ? TextField(
+          controller: _searchController,
+          autofocus: true,
+          decoration: const InputDecoration(
+            hintText: 'Search customers...',
+            border: InputBorder.none,
+          ),
+        )
+            : const Text(
           'PesaBook',
           style: TextStyle(
             fontWeight: FontWeight.bold,
           ),
         ),
         actions: [
-          IconButton(
-            onPressed: () {},
-            icon: const Icon(Icons.search),
-            tooltip: 'Search customers',
-          ),
-          IconButton(
-            onPressed: _openShopSettings,
-            icon: const Icon(Icons.settings),
-            tooltip: 'Shop settings',
-          ),
+          if (_isSearching)
+            IconButton(
+              onPressed: _closeSearch,
+              icon: const Icon(Icons.close),
+              tooltip: 'Close search',
+            )
+          else ...[
+            IconButton(
+              onPressed: _startSearch,
+              icon: const Icon(Icons.search),
+              tooltip: 'Search customers',
+            ),
+            IconButton(
+              onPressed: _openShopSettings,
+              icon: const Icon(Icons.settings),
+              tooltip: 'Shop settings',
+            ),
+          ],
         ],
       ),
-
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(16),
-                color: Theme.of(context)
-                    .colorScheme
-                    .primaryContainer,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Money Owed to You',
-                    style: TextStyle(
-                      fontSize: 17,
-                      fontWeight: FontWeight.w500,
+            if (!_isSearching) ...[
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  color: Theme.of(context)
+                      .colorScheme
+                      .primaryContainer,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Money Owed to You',
+                      style: TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'KES ${totalDebt.toStringAsFixed(0)}',
-                    style: const TextStyle(
-                      fontSize: 32,
-                      fontWeight: FontWeight.bold,
+                    const SizedBox(height: 8),
+                    Text(
+                      'KES ${totalDebt.toStringAsFixed(0)}',
+                      style: const TextStyle(
+                        fontSize: 32,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 28),
+              const Text(
+                'Customers Who Owe You',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 12),
+            ],
+
+            if (_isSearching && _searchController.text.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Text(
+                  '${displayedCustomers.length} customer'
+                      '${displayedCustomers.length == 1 ? '' : 's'} found',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
                   ),
-                ],
+                ),
               ),
-            ),
-
-            const SizedBox(height: 28),
-
-            const Text(
-              'Customers Who Owe You',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-
-            const SizedBox(height: 12),
 
             Expanded(
               child: _customers.isEmpty
@@ -180,10 +257,20 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
               )
+                  : displayedCustomers.isEmpty
+                  ? const Center(
+                child: Text(
+                  'No customers found.',
+                  style: TextStyle(
+                    fontSize: 17,
+                  ),
+                ),
+              )
                   : ListView.builder(
-                itemCount: _customers.length,
+                itemCount: displayedCustomers.length,
                 itemBuilder: (context, index) {
-                  final customer = _customers[index];
+                  final customer =
+                  displayedCustomers[index];
 
                   return Card(
                     margin: const EdgeInsets.only(
