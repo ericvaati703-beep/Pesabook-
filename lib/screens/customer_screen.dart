@@ -23,7 +23,9 @@ class _CustomerScreenState extends State<CustomerScreen> {
     final payment = await Navigator.push<double>(
       context,
       MaterialPageRoute(
-        builder: (context) => const RecordPaymentScreen(),
+        builder: (context) => RecordPaymentScreen(
+          currentBalance: widget.customer.amount,
+        ),
       ),
     );
 
@@ -97,8 +99,103 @@ class _CustomerScreenState extends State<CustomerScreen> {
     Navigator.pop(context, updatedCustomer);
   }
 
+  String _formatDate(DateTime date) {
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+
+    final hour = date.hour == 0
+        ? 12
+        : date.hour > 12
+        ? date.hour - 12
+        : date.hour;
+
+    final minute = date.minute.toString().padLeft(2, '0');
+
+    final period = date.hour >= 12 ? 'PM' : 'AM';
+
+    return '${date.day} ${months[date.month - 1]} '
+        '${date.year} • $hour:$minute $period';
+  }
+
+  double _balanceAfterTransaction(int index) {
+    double balance = 0;
+
+    for (int i = 0; i <= index; i++) {
+      final transaction = widget.customer.transactions[i];
+
+      if (transaction.type == 'Debt') {
+        balance += transaction.amount;
+      } else if (transaction.type == 'Payment') {
+        balance -= transaction.amount;
+      }
+    }
+
+    if (balance < 0) {
+      balance = 0;
+    }
+
+    return balance;
+  }
+
+  Widget _buildTransactionCard(
+      Transaction transaction,
+      double balanceAfter,
+      ) {
+    final bool isDebt = transaction.type == 'Debt';
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 10),
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 8,
+        ),
+        leading: CircleAvatar(
+          child: Icon(
+            isDebt
+                ? Icons.arrow_upward
+                : Icons.arrow_downward,
+          ),
+        ),
+        title: Text(
+          isDebt ? 'Debt Added' : 'Payment Received',
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        subtitle: Text(
+          '${_formatDate(transaction.date)}\n'
+              'Balance: KES ${balanceAfter.toStringAsFixed(0)}',
+        ),
+        trailing: Text(
+          '${isDebt ? '+' : '-'} KES '
+              '${transaction.amount.toStringAsFixed(0)}',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 16,
+            color: isDebt ? Colors.red : Colors.green,
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final bool isPaid = widget.customer.amount <= 0;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Customer Details'),
@@ -146,11 +243,13 @@ class _CustomerScreenState extends State<CustomerScreen> {
             const SizedBox(height: 10),
 
             Text(
-              'KES ${widget.customer.amount.toStringAsFixed(0)}',
-              style: const TextStyle(
+              isPaid
+                  ? 'PAID'
+                  : 'KES ${widget.customer.amount.toStringAsFixed(0)}',
+              style: TextStyle(
                 fontSize: 32,
                 fontWeight: FontWeight.bold,
-                color: Colors.red,
+                color: isPaid ? Colors.green : Colors.red,
               ),
             ),
 
@@ -159,7 +258,7 @@ class _CustomerScreenState extends State<CustomerScreen> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: _recordPayment,
+                onPressed: isPaid ? null : _recordPayment,
                 child: const Text('Record Payment'),
               ),
             ),
@@ -209,32 +308,23 @@ class _CustomerScreenState extends State<CustomerScreen> {
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 itemBuilder: (context, index) {
+                  final transactionIndex =
+                      widget.customer.transactions.length -
+                          1 -
+                          index;
+
                   final transaction =
                   widget.customer.transactions[
-                  widget.customer.transactions.length -
-                      1 -
-                      index
-                  ];
+                  transactionIndex];
 
-                  return Card(
-                    child: ListTile(
-                      leading: Icon(
-                        transaction.type == 'Debt'
-                            ? Icons.add_circle
-                            : Icons.remove_circle,
-                      ),
-                      title: Text(
-                        transaction.type,
-                      ),
-                      subtitle: Text(
-                        'KES ${transaction.amount.toStringAsFixed(0)}\n'
-                            '${transaction.date.day}/'
-                            '${transaction.date.month}/'
-                            '${transaction.date.year} '
-                            '${transaction.date.hour}:'
-                            '${transaction.date.minute.toString().padLeft(2, '0')}',
-                      ),
-                    ),
+                  final balanceAfter =
+                  _balanceAfterTransaction(
+                    transactionIndex,
+                  );
+
+                  return _buildTransactionCard(
+                    transaction,
+                    balanceAfter,
                   );
                 },
               ),
