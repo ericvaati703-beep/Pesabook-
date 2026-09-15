@@ -13,8 +13,7 @@ class CustomersScreen extends StatefulWidget {
 class _CustomersScreenState extends State<CustomersScreen> {
   final List<Customer> _customers = [];
 
-  final TextEditingController _searchController =
-  TextEditingController();
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
@@ -74,9 +73,6 @@ class _CustomersScreenState extends State<CustomersScreen> {
       ),
     );
 
-    // If CustomerScreen was closed with the Back button,
-    // updatedCustomer can be null. But the original customer
-    // object may already have been changed in memory.
     final customerToSave = updatedCustomer ?? customer;
 
     final index = _customers.indexOf(customer);
@@ -87,12 +83,10 @@ class _CustomersScreenState extends State<CustomersScreen> {
       });
     }
 
-    // Save the updated customer list.
     await StorageService.saveCustomers(_customers);
 
     if (!mounted) return;
 
-    // Return the updated customer to HomeScreen.
     Navigator.pop(context, customerToSave);
   }
 
@@ -114,14 +108,13 @@ class _CustomersScreenState extends State<CustomersScreen> {
           ),
         ),
         subtitle: Text(
-          customer.phone.isEmpty
-              ? 'No phone number'
-              : customer.phone,
+          [
+            if (customer.phone.isEmpty) 'No phone number' else customer.phone,
+            if (customer.debtAgeLabel.isNotEmpty) customer.debtAgeLabel,
+          ].join(' · '),
         ),
         trailing: Text(
-          isPaid
-              ? 'PAID'
-              : 'KES ${customer.amount.toStringAsFixed(0)}',
+          isPaid ? 'PAID' : 'KES ${customer.amount.toStringAsFixed(0)}',
           style: TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 16,
@@ -140,7 +133,6 @@ class _CustomersScreenState extends State<CustomersScreen> {
         .where((customer) => customer.amount > 0)
         .toList();
 
-    // Highest debt first.
     owingCustomers.sort(
           (a, b) => b.amount.compareTo(a.amount),
     );
@@ -178,9 +170,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
                 border: const OutlineInputBorder(),
               ),
             ),
-
             const SizedBox(height: 20),
-
             Expanded(
               child: customers.isEmpty
                   ? const Center(
@@ -191,9 +181,6 @@ class _CustomersScreenState extends State<CustomersScreen> {
               )
                   : ListView(
                 children: [
-                  // -------------------------
-                  // CUSTOMERS WHO OWE
-                  // -------------------------
                   if (owingCustomers.isNotEmpty) ...[
                     const Text(
                       'Customers Who Owe You',
@@ -202,22 +189,14 @@ class _CustomersScreenState extends State<CustomersScreen> {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-
                     const SizedBox(height: 12),
-
                     ...owingCustomers.map(
-                          (customer) =>
-                          _buildCustomerCard(customer),
+                          (customer) => _buildCustomerCard(customer),
                     ),
                   ],
-
-                  // -------------------------
-                  // PAID CUSTOMERS
-                  // -------------------------
                   if (paidCustomers.isNotEmpty) ...[
                     if (owingCustomers.isNotEmpty)
                       const SizedBox(height: 20),
-
                     const Text(
                       'Paid Customers',
                       style: TextStyle(
@@ -225,12 +204,9 @@ class _CustomersScreenState extends State<CustomersScreen> {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-
                     const SizedBox(height: 12),
-
                     ...paidCustomers.map(
-                          (customer) =>
-                          _buildCustomerCard(customer),
+                          (customer) => _buildCustomerCard(customer),
                     ),
                   ],
                 ],

@@ -281,6 +281,7 @@ class _CustomerScreenState extends State<CustomerScreen> {
                 onPressed: isPaid ? null : _sendReminder,
                 child: const Text('Send Reminder'),
               ),
+
             ),
 
             const SizedBox(height: 30),

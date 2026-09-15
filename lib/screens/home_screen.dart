@@ -203,9 +203,10 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
         subtitle: Text(
-          customer.phone.isEmpty
-              ? 'No phone number'
-              : customer.phone,
+          [
+            if (customer.phone.isEmpty) 'No phone number' else customer.phone,
+            if (customer.debtAgeLabel.isNotEmpty) customer.debtAgeLabel,
+          ].join(' · '),
         ),
         trailing: Text(
           'KES ${customer.amount.toStringAsFixed(0)}',
