@@ -278,7 +278,7 @@ class _CustomerScreenState extends State<CustomerScreen> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: _sendReminder,
+                onPressed: isPaid ? null : _sendReminder,
                 child: const Text('Send Reminder'),
               ),
             ),
