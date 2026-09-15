@@ -1,6 +1,6 @@
-8# PesaBook — Project Memory
+# PesaBook — Project Memory
 
-Last updated: September 2026
+Last updated: 15 September 2026
 
 ---
 
@@ -60,7 +60,7 @@ Build command:
 C:\flutter\bin\flutter.bat build apk
 Output:
 build\app\outputs\flutter-apk\app-release.apk
-Last known APK size: 47.0 MB (THIS IS TOO BIG — see next actions)
+Last known APK size: 47.0 MB (STILL TOO BIG — see next actions)
 
 Distribution: manual APK sideload. No Play Store yet.
 
@@ -82,46 +82,42 @@ Branch: main
 - Home screen (total owed, active customers sorted by amount, search)
 - Send Reminder (WhatsApp + SMS, editable message, pulls shop details)
 - Shop Setup (shop name, payment method, till/paybill/pochi numbers)
+- Debt age shown on each customer row (e.g. "12 days", "2 months")
 
 ---
 
-## 5. KNOWN BUGS / ISSUES (as of Sept 2026)
+## 5. KNOWN BUGS / ISSUES
 
-Priority order:
+FIXED:
+- ~~App name showed "pesabook1"~~ → renamed display name to PesaBook
+- ~~Send Reminder enabled on PAID customers~~ → now disabled
+- ~~Balances shown in red everywhere~~ → now neutral on lists,
+  green only for PAID
+- ~~No debt age on customer rows~~ → now shows on Home + Customers
 
-1. App name still shows as "pesabook1" and icon is default Flutter logo.
-   → Fix in AndroidManifest.xml (android:label) and app icons.
+STILL OPEN (priority order):
 
-2. Send Reminder button is ENABLED on PAID customers.
-   → Should be disabled when balance is 0. Reminding someone who owes
-   nothing is bad for the business relationship.
+1. App icon is still the default Flutter logo.
+   → Need a 512x512+ PNG. Use flutter_launcher_icons package.
+   → Do NOT change the Android package name yet.
 
-3. Balances shown in RED everywhere.
-   → Red means "danger." Owing money is normal. Change to bold black.
-   Save red only if we later add genuine "overdue" state.
+2. Transaction history label "Balance: KES X" is ambiguous.
+   → It means balance AFTER that transaction. Rename to
+   "Remaining: KES X" or "After: KES X".
 
-4. No debt age shown on customer rows.
-   → A shopkeeper needs to know: is this debt from yesterday or 3 months
-   ago? Add "3 days" / "2 months" under each name on Home + Customers.
+3. No way to edit or delete a transaction.
+   → If a shopkeeper mis-enters 5000 instead of 500, no recovery.
+   This is a trust-killer for a money app. Add long-press →
+   edit/delete with confirmation.
 
-5. Transaction history "Balance: KES X" label is ambiguous.
-   → Rename to "Remaining: KES X" or "After: KES X". It means balance
-   AFTER that transaction, not current balance.
-
-6. No way to edit or delete a transaction.
-   → If a shopkeeper mis-enters 5000 instead of 500, no recovery path.
-   This is a trust-killer for a money app. Add long-press → edit/delete
-   with confirmation.
-
-7. No record that a reminder was sent.
+4. No record that a reminder was sent.
    → Add a "Reminder sent" entry to transaction history (greyed out,
-   does not affect balance) so the user knows they already reminded.
+   does not affect balance).
 
-8. Shop Setup: payment method dropdown doesn't change the field label.
-   → If dropdown has multiple options, the field below should update
-   (e.g. "Till Number" → "PayBill Number" → "Pochi Number").
+5. Shop Setup: payment method dropdown doesn't change the field label.
+   → Field below should update when dropdown changes.
 
-9. APK is 47 MB. Too large for WhatsApp sharing on limited data.
+6. APK is 47 MB. Too large for WhatsApp sharing on limited data.
    → Try: flutter build apk --split-per-abi
    → Check for unused assets.
 
@@ -129,17 +125,14 @@ Priority order:
 
 ## 6. NEXT ACTIONS (in order)
 
-1. Finish this PROJECT.md and commit it. (DONE when this file is pushed)
-2. Rename display name to "PesaBook", replace icon. Rebuild + reinstall.
-3. Fix Send Reminder disabled on paid customers.
-4. Change red balances to black on Home + Customers.
-5. Add debt age to customer rows.
-6. Add transaction edit/delete.
-7. Log reminders in transaction history.
-8. Reduce APK size with split-per-abi.
-
-Do NOT change the Android package name (com.example.pesabook1 or
-similar) until closer to Play Store. Only change the display name.
+1. Install latest APK on phone and verify the four fixes above.
+2. Replace app icon with a proper PesaBook icon.
+3. Rename "Balance" label to "Remaining" in transaction history.
+4. Add transaction edit/delete.
+5. Log reminders in transaction history.
+6. Reduce APK size with split-per-abi.
+7. Sit in one real shop for a full day and watch how credit is
+   actually tracked. Do not build more features before doing this.
 
 ---
 
@@ -161,12 +154,26 @@ Ask these and WRITE DOWN the answers:
 - Simple → useful → tested with real people → improve from evidence.
 - Do not add features that have not been requested by real users.
 - Commit after every working change. Push to GitHub so nothing is lost.
+- Run `flutter analyze` before every commit. Fix errors before pushing.
 - Update this file whenever a decision is made or a bug is found.
 - When starting a new AI chat, paste this entire file first.
 
 ---
 
-## 9. THE HARD TRUTH TO REMEMBER
+## 9. SESSION LOG
+
+15 Sep 2026:
+- Created PROJECT.md
+- Renamed display name from pesabook1 to PesaBook
+- Disabled Send Reminder for paid customers
+- Changed red balances to neutral on Home + Customers lists
+- Added debt age to customer rows
+- All changes committed and pushed to GitHub
+- APK rebuilt (47 MB)
+
+---
+
+## 10. THE HARD TRUTH TO REMEMBER
 
 The idea is fine. The execution is on track.
 
