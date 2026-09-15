@@ -125,7 +125,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
           style: TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 16,
-            color: isPaid ? Colors.green : Colors.red,
+            color: isPaid ? Colors.green : null,
           ),
         ),
       ),
