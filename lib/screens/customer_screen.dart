@@ -24,6 +24,7 @@ class _CustomerScreenState extends State<CustomerScreen> {
       context,
       MaterialPageRoute(
         builder: (context) => RecordPaymentScreen(
+          customerName: widget.customer.name,
           currentBalance: widget.customer.amount,
         ),
       ),
@@ -52,7 +53,10 @@ class _CustomerScreenState extends State<CustomerScreen> {
     final debt = await Navigator.push<double>(
       context,
       MaterialPageRoute(
-        builder: (context) => const AddNewDebtScreen(),
+        builder: (context) => AddNewDebtScreen(
+          customerName: widget.customer.name,
+          currentBalance: widget.customer.amount,
+        ),
       ),
     );
 
@@ -164,9 +168,7 @@ class _CustomerScreenState extends State<CustomerScreen> {
         ),
         leading: CircleAvatar(
           child: Icon(
-            isDebt
-                ? Icons.arrow_upward
-                : Icons.arrow_downward,
+            isDebt ? Icons.arrow_upward : Icons.arrow_downward,
           ),
         ),
         title: Text(
@@ -281,7 +283,6 @@ class _CustomerScreenState extends State<CustomerScreen> {
                 onPressed: isPaid ? null : _sendReminder,
                 child: const Text('Send Reminder'),
               ),
-
             ),
 
             const SizedBox(height: 30),
@@ -310,18 +311,13 @@ class _CustomerScreenState extends State<CustomerScreen> {
                 physics: const NeverScrollableScrollPhysics(),
                 itemBuilder: (context, index) {
                   final transactionIndex =
-                      widget.customer.transactions.length -
-                          1 -
-                          index;
+                      widget.customer.transactions.length - 1 - index;
 
                   final transaction =
-                  widget.customer.transactions[
-                  transactionIndex];
+                  widget.customer.transactions[transactionIndex];
 
                   final balanceAfter =
-                  _balanceAfterTransaction(
-                    transactionIndex,
-                  );
+                  _balanceAfterTransaction(transactionIndex);
 
                   return _buildTransactionCard(
                     transaction,
