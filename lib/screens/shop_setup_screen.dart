@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/shop.dart';
 import '../services/storage_service.dart';
-import 'home_screen.dart';
+
 
 class ShopSetupScreen extends StatefulWidget {
   const ShopSetupScreen({super.key});
@@ -17,6 +17,33 @@ class _ShopSetupScreenState extends State<ShopSetupScreen> {
 
   String _paymentMethod = 'M-Pesa Till Number';
 
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSavedShop();
+  }
+
+  Future<void> _loadSavedShop() async {
+    final shop = await StorageService.loadShop();
+
+    if (!mounted) return;
+
+    if (shop != null) {
+      _shopNameController.text = shop.name;
+      _paymentMethod = shop.paymentMethod;
+      _paymentNumberController.text = shop.paymentNumber;
+      if (shop.accountNumber != null) {
+        _accountNumberController.text = shop.accountNumber!;
+      }
+    }
+
+    setState(() {
+      _isLoading = false;
+    });
+  }
+
   @override
   void dispose() {
     _shopNameController.dispose();
@@ -29,16 +56,12 @@ class _ShopSetupScreenState extends State<ShopSetupScreen> {
     switch (_paymentMethod) {
       case 'M-Pesa Till Number':
         return 'Till Number';
-
       case 'M-Pesa PayBill':
         return 'Business Number';
-
       case 'Pochi la Biashara':
         return 'Business Phone Number';
-
       case 'Phone Number':
         return 'Phone Number';
-
       default:
         return 'Payment Number';
     }
@@ -48,16 +71,12 @@ class _ShopSetupScreenState extends State<ShopSetupScreen> {
     switch (_paymentMethod) {
       case 'M-Pesa Till Number':
         return 'Enter your M-Pesa Till Number';
-
       case 'M-Pesa PayBill':
         return 'Enter your PayBill Business Number';
-
       case 'Pochi la Biashara':
         return 'Enter your business phone number';
-
       case 'Phone Number':
         return 'Enter your phone number';
-
       default:
         return 'Enter payment number';
     }
@@ -107,16 +126,22 @@ class _ShopSetupScreenState extends State<ShopSetupScreen> {
       ),
     );
 
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const HomeScreen(),
-      ),
-    );
+    Navigator.pop(context);
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text('Shop Setup'),
+        ),
+        body: const Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Shop Setup'),
@@ -187,7 +212,6 @@ class _ShopSetupScreenState extends State<ShopSetupScreen> {
 
             if (_isPayBill) ...[
               const SizedBox(height: 20),
-
               TextField(
                 controller: _accountNumberController,
                 decoration: const InputDecoration(
