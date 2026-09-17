@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/shop.dart';
 import '../services/storage_service.dart';
-
+import 'home_screen.dart';
 
 class ShopSetupScreen extends StatefulWidget {
   const ShopSetupScreen({super.key});
@@ -126,7 +126,19 @@ class _ShopSetupScreenState extends State<ShopSetupScreen> {
       ),
     );
 
-    Navigator.pop(context);
+    // If Shop Setup was opened from Home, pop back to it.
+    // If it is the very first screen (no saved shop yet),
+    // there is nothing to pop back to — open Home instead.
+    if (Navigator.canPop(context)) {
+      Navigator.pop(context);
+    } else {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const HomeScreen(),
+        ),
+      );
+    }
   }
 
   @override
