@@ -45,3 +45,6 @@ app.*.map.json
 /android/app/release
 test.zip
 **/build/
+
+# Keystore properties — DO NOT COMMIT
+android/key.properties
