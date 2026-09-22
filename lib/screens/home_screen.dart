@@ -19,8 +19,7 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _isSearching = false;
   int _selectedIndex = 0;
 
-  final TextEditingController _searchController =
-  TextEditingController();
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
@@ -80,7 +79,6 @@ class _HomeScreenState extends State<HomeScreen> {
       return name.contains(query) || phone.contains(query);
     }).toList();
 
-    // Highest debt first.
     activeCustomers.sort(
           (a, b) => b.amount.compareTo(a.amount),
     );
@@ -170,7 +168,6 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       );
 
-      // Reload customers after returning from the Customers screen.
       await _loadCustomers();
 
       if (!mounted) return;
@@ -261,7 +258,6 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ],
       ),
-
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -273,9 +269,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(16),
-                  color: Theme.of(context)
-                      .colorScheme
-                      .primaryContainer,
+                  color: Theme.of(context).colorScheme.primaryContainer,
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -295,13 +289,22 @@ class _HomeScreenState extends State<HomeScreen> {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Your debt book — track who owes you and record payments.',
+                      style: TextStyle(
+                        fontSize: 13,
+                          color: Theme.of(context)
+                              .colorScheme
+                              .onPrimaryContainer
+                              .withValues(alpha: 0.7),
+                      ),
+                    ),
                   ],
                 ),
               ),
-
               const SizedBox(height: 28),
             ],
-
             if (activeCustomers.isNotEmpty)
               const Text(
                 'Customers Who Owe You',
@@ -310,10 +313,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   fontWeight: FontWeight.bold,
                 ),
               ),
-
-            if (activeCustomers.isNotEmpty)
-              const SizedBox(height: 12),
-
+            if (activeCustomers.isNotEmpty) const SizedBox(height: 12),
             Expanded(
               child: activeCustomers.isEmpty
                   ? Center(
@@ -335,9 +335,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 },
               ),
             ),
-
             const SizedBox(height: 12),
-
             SizedBox(
               width: double.infinity,
               height: 55,
@@ -356,7 +354,6 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
       ),
-
       bottomNavigationBar: NavigationBar(
         selectedIndex: _selectedIndex,
         onDestinationSelected: _onNavigationTapped,
