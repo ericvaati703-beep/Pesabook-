@@ -14,9 +14,6 @@ class Customer {
   }) : transactions = transactions ?? [];
 
   /// Date when the current unpaid balance began.
-  /// Walks history forward, remembering the last point where
-  /// the balance hit zero. The first Debt after that point is
-  /// when the current debt started.
   DateTime? get currentDebtStartDate {
     if (transactions.isEmpty) return null;
 
@@ -48,14 +45,18 @@ class Customer {
   }
 
   /// Human-readable label like 'today', '3 days', '2 months'.
-  /// Returns empty string if nothing is owed or no start date exists.
+  /// Counts calendar days, not elapsed 24-hour periods.
   String get debtAgeLabel {
     if (amount <= 0) return '';
 
     final start = currentDebtStartDate;
     if (start == null) return '';
 
-    final days = DateTime.now().difference(start).inDays;
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final startDay = DateTime(start.year, start.month, start.day);
+
+    final days = today.difference(startDay).inDays;
 
     if (days <= 0) return 'today';
     if (days == 1) return '1 day';
