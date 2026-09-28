@@ -15,7 +15,7 @@ class _ShopSetupScreenState extends State<ShopSetupScreen> {
   final _paymentNumberController = TextEditingController();
   final _accountNumberController = TextEditingController();
 
-  String _paymentMethod = 'M-Pesa Till Number';
+  String _paymentMethod = 'None';
 
   bool _isLoading = true;
 
@@ -32,7 +32,7 @@ class _ShopSetupScreenState extends State<ShopSetupScreen> {
 
     if (shop != null) {
       _shopNameController.text = shop.name;
-      _paymentMethod = shop.paymentMethod;
+      _paymentMethod = shop.paymentMethod.isEmpty ? 'None' : shop.paymentMethod;
       _paymentNumberController.text = shop.paymentNumber;
       if (shop.accountNumber != null) {
         _accountNumberController.text = shop.accountNumber!;
@@ -51,6 +51,10 @@ class _ShopSetupScreenState extends State<ShopSetupScreen> {
     _accountNumberController.dispose();
     super.dispose();
   }
+
+  bool get _hasPaymentMethod => _paymentMethod != 'None';
+
+  bool get _isPayBill => _paymentMethod == 'M-Pesa PayBill';
 
   String get _paymentNumberLabel {
     switch (_paymentMethod) {
@@ -82,19 +86,24 @@ class _ShopSetupScreenState extends State<ShopSetupScreen> {
     }
   }
 
-  bool get _isPayBill {
-    return _paymentMethod == 'M-Pesa PayBill';
-  }
-
   Future<void> _saveShop() async {
     final shopName = _shopNameController.text.trim();
     final paymentNumber = _paymentNumberController.text.trim();
     final accountNumber = _accountNumberController.text.trim();
 
-    if (shopName.isEmpty || paymentNumber.isEmpty) {
+    if (shopName.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Please fill in all required fields.'),
+          content: Text('Please enter your shop name.'),
+        ),
+      );
+      return;
+    }
+
+    if (_hasPaymentMethod && paymentNumber.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Enter the payment number, or choose None.'),
         ),
       );
       return;
@@ -111,8 +120,8 @@ class _ShopSetupScreenState extends State<ShopSetupScreen> {
 
     final shop = Shop(
       name: shopName,
-      paymentMethod: _paymentMethod,
-      paymentNumber: paymentNumber,
+      paymentMethod: _hasPaymentMethod ? _paymentMethod : '',
+      paymentNumber: _hasPaymentMethod ? paymentNumber : '',
       accountNumber: _isPayBill ? accountNumber : null,
     );
 
@@ -126,9 +135,6 @@ class _ShopSetupScreenState extends State<ShopSetupScreen> {
       ),
     );
 
-    // If Shop Setup was opened from Home, pop back to it.
-    // If it is the very first screen (no saved shop yet),
-    // there is nothing to pop back to — open Home instead.
     if (Navigator.canPop(context)) {
       Navigator.pop(context);
     } else {
@@ -175,10 +181,14 @@ class _ShopSetupScreenState extends State<ShopSetupScreen> {
             DropdownButtonFormField<String>(
               initialValue: _paymentMethod,
               decoration: const InputDecoration(
-                labelText: 'Payment Method',
+                labelText: 'Payment Method (optional)',
                 border: OutlineInputBorder(),
               ),
               items: const [
+                DropdownMenuItem(
+                  value: 'None',
+                  child: Text('None — no payment details'),
+                ),
                 DropdownMenuItem(
                   value: 'M-Pesa Till Number',
                   child: Text('M-Pesa Till Number'),
@@ -207,20 +217,21 @@ class _ShopSetupScreenState extends State<ShopSetupScreen> {
               },
             ),
 
-            const SizedBox(height: 20),
-
-            TextField(
-              controller: _paymentNumberController,
-              keyboardType: _paymentMethod == 'M-Pesa Till Number' ||
-                  _paymentMethod == 'M-Pesa PayBill'
-                  ? TextInputType.number
-                  : TextInputType.phone,
-              decoration: InputDecoration(
-                labelText: _paymentNumberLabel,
-                hintText: _paymentNumberHint,
-                border: const OutlineInputBorder(),
+            if (_hasPaymentMethod) ...[
+              const SizedBox(height: 20),
+              TextField(
+                controller: _paymentNumberController,
+                keyboardType: _paymentMethod == 'M-Pesa Till Number' ||
+                    _paymentMethod == 'M-Pesa PayBill'
+                    ? TextInputType.number
+                    : TextInputType.phone,
+                decoration: InputDecoration(
+                  labelText: _paymentNumberLabel,
+                  hintText: _paymentNumberHint,
+                  border: const OutlineInputBorder(),
+                ),
               ),
-            ),
+            ],
 
             if (_isPayBill) ...[
               const SizedBox(height: 20),
