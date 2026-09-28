@@ -1,6 +1,6 @@
 # PesaBook — Project Memory
 
-Last updated: 21 September 2026
+Last updated: 28 September 2026
 
 ---
 
@@ -28,20 +28,20 @@ on credit and currently track debts in notebooks, memory, or WhatsApp.
 Secondary: Other small operators who personally keep customer credit
 records.
 
-Known testers:
-- Mother (shopkeeper) — primary tester
-- A shop owner in the same plot (approached 21 Sep, said busy)
+Known testers and users:
+- Mother (shopkeeper) — early tester
+- Duka/motorbike circle in the same plot — DAILY ACTIVE USER
+  (see Section 12 for what they said)
+- Juice shop owner — asked about M-Pesa payment prompts (logged)
 - A teacher who requested the APK — not yet delivered
-- A motorbike/Bolt rider — fit uncertain, deprioritized
+- A shop owner who said "busy" — approached twice, not yet engaged
 
-NOTE: Stop counting testers who don't actually extend credit.
-
-PITCH (Swahili, memorize this):
+PITCH (Swahili, memorize):
 "Ni kitabu cha deni kwa simu — unaandika nani anakudai na pesa
 ngapi, na inakuonyesha."
 
-Translation: "It's a debt book for the phone — you write who owes you
-and how much, and it shows you."
+Translation: "It's a debt book for the phone — you write who owes
+you and how much, and it shows you."
 
 Use this BEFORE the person says "I'm busy." Don't start tapping
 through screens. Let them ask.
@@ -97,9 +97,8 @@ C:\Users\Admin\keystores\. If the school computer is wiped and the
 phone backup is also lost, updates to PesaBook become impossible
 forever. Keep the backup.
 
-TESTED: As of 21 Sep 2026, a signed APK installed over an existing
-PesaBook install WITHOUT requiring uninstall. This is the proof
-signing works. Future updates install cleanly.
+TESTED: Signed APK installs over existing install WITHOUT uninstall.
+This is the proof signing works. Future updates install cleanly.
 
 IMPORTANT: If you ever build on a DIFFERENT computer, you must:
 1. Copy pesabook-keystore.jks to that machine
@@ -124,9 +123,12 @@ IMPORTANT: If you ever build on a DIFFERENT computer, you must:
 - Send Reminder disabled on PAID customers
 - Shop Setup (shop name, payment method, till/paybill/pochi numbers)
 - Shop Setup loads saved values when reopened
+- Payment details optional in Shop Setup (None option added)
 - Debt age shown on each customer row ("today", "3 days", "2 months")
+  — counts calendar days, not elapsed hours
 - App icon (PB wordmark on purple background)
 - Release builds signed with PesaBook keystore
+- Tagline on Home screen explaining what PesaBook does
 
 ---
 
@@ -140,63 +142,87 @@ FIXED (do not redo):
 - Shop Setup didn't load saved values → now does
 - Black screen after saving Shop Setup on first launch → fixed
 - APK required uninstall before update → signing solved this
+- Debt age counted hours instead of calendar days → fixed
+- Shop Setup blocked users without a payment method → now optional
 
 STILL OPEN (priority order):
 
-1. "Balance: KES X" label in transaction history is ambiguous.
+1. No backup/export feature. **THIS IS THE NEXT REAL FEATURE.**
+   If a shopkeeper's phone breaks, or they reinstall the app, all
+   records vanish. This is the biggest trust risk for real users.
+   A duka user is now using the app daily. If his phone breaks,
+   he loses everything and never trusts the app again.
+
+2. "Balance: KES X" label in transaction history is ambiguous.
    It means balance AFTER that transaction, not current balance.
    Rename to "Remaining: KES X" or "After: KES X".
 
-2. No record that a reminder was sent.
-   If a shopkeeper sends dommy a WhatsApp reminder today, nothing
-   is recorded. They can double-send and look like a nag.
-   Add a "Reminder sent" entry to transaction history (greyed out,
-   does not affect balance).
-
-3. No backup/export feature.
-   If a shopkeeper's phone breaks, or they reinstall the app, all
-   records vanish. This is a trust-killer for real users.
-   Should be the next major feature.
-
-4. APK is 47.2 MB. Too large for WhatsApp sharing on limited data.
+3. APK is 47.2 MB. Too large for WhatsApp sharing on limited data.
    Try: flutter build apk --split-per-abi
+   Or: flutter build apk --target-platform android-arm64
+   (check size first, then decide)
 
-5. Icon source image was not square (999x642), so the launcher icon
-   has white bands on the sides. Works, but looks slightly unpolished.
-   Fix later with a square source PNG.
+4. No record that a reminder was sent.
+   Decided 22 Sep: don't build unless a real user asks.
 
-6. No transaction edit/delete.
+5. No transaction edit/delete.
    DECISION (16 Sep): Do NOT add general edit/delete. Instead:
-    - Confirmation dialog before save (DONE)
-    - Later: undo last transaction within a short window
-    - Much later: Adjustment transaction type for legitimate corrections
-      Reason: an editable money ledger can be doubted. Trust matters more.
+   - Confirmation dialog before save (DONE)
+   - Later: undo last transaction within a short window
+   - Much later: Adjustment transaction type for legitimate corrections
+     Reason: an editable money ledger can be doubted.
 
-7. SharedPreferences may need migration to SQLite eventually.
+6. SharedPreferences may need migration to SQLite eventually.
    It was designed for key-value flags, not money ledgers. Risk of
    data loss at scale. Not urgent for now, but plan for it before
    real users trust it with large amounts of money.
 
-8. Signature mismatch is solved, but building on a new machine
-   requires the keystore + key.properties setup (see Section 4).
+7. Icon source image was not square (999x642), so the launcher
+   icon has white bands on the sides. Works, but slightly unpolished.
+   Fix later with a square source PNG.
 
 ---
 
-## 7. NEXT ACTIONS (in order)
+## 7. REQUESTED FEATURES (not building yet)
 
-1. Update this PROJECT.md after every session.
-2. Show the app to 3 more shopkeepers. Use the Swahili pitch.
-   Ask the questions in Section 8. Write down what they say.
-   DO NOT BUILD MORE FEATURES before this.
-3. Add reminder logging (item 2 above).
-4. Add backup/export (item 3 above).
-5. Rename "Balance" label in transaction history (item 1).
-6. Reduce APK size with --split-per-abi (item 4).
-7. Fix icon to square source (item 5).
+Logged because real users asked. Do NOT build without more evidence.
+
+- **M-Pesa STK Push / payment prompts.**
+  Requested by: juice shop owner (24 Sep 2026).
+  What it is: user types a customer's number, customer receives
+  an M-Pesa prompt, enters PIN, money moves.
+  Why not now: requires a backend server, Daraja API production
+  access, a registered business, a Paybill/Till in that business's
+  name, public HTTPS callback, hosting, and a user account system.
+  This is a different product, not a feature.
+  Revisit when: multiple users ask AND there is money for hosting
+  AND a registered business exists.
+
+- **Play Store distribution.**
+  Requested by: two separate users (duka guy + motorbike rider).
+  Cost: $25 one-time Google developer registration.
+  Requires: signed APK (DONE) + backup feature (NOT DONE) +
+  privacy policy + store listing.
+  Do this AFTER backup exists. No point listing on Play Store if
+  users can lose their data on reinstall.
 
 ---
 
-## 8. TESTING QUESTIONS TO ASK REAL USERS
+## 8. NEXT ACTIONS (in order)
+
+1. Update PROJECT.md after every session.
+2. **Build backup/export feature** (item 1 in Section 6).
+   This unblocks Play Store and protects the duka user's data.
+3. Show the app to 2-3 more credit-selling shops. Use the pitch.
+   Ask the questions in Section 9. Write down answers.
+4. Reduce APK size (Section 6 item 3).
+5. Rename "Balance" label in transaction history (Section 6 item 2).
+6. Register Play Store developer account (after backup is done).
+7. Fix icon to square source (Section 6 item 7).
+
+---
+
+## 9. TESTING QUESTIONS TO ASK REAL USERS
 
 Ask these and WRITE DOWN the answers. Word for word.
 
@@ -218,7 +244,7 @@ Rules for asking:
 
 ---
 
-## 9. RULES FOR WORKING ON THIS PROJECT
+## 10. RULES FOR WORKING ON THIS PROJECT
 
 - Simple → useful → tested with real people → improve from evidence.
 - Do not add features that have not been requested by real users.
@@ -231,7 +257,7 @@ Rules for asking:
 
 ---
 
-## 10. SESSION LOG
+## 11. SESSION LOG
 
 15 Sep 2026:
 - Created PROJECT.md
@@ -257,29 +283,75 @@ Rules for asking:
 21 Sep 2026:
 - Generated app icon (PB wordmark on purple)
 - Verified signed APK updates over existing install WITHOUT uninstall
-- Showed app to shopkeeper in same plot (said busy, no pitch yet)
+- Showed app to shopkeeper in same plot (said busy)
+
+22 Sep 2026:
+- Added tagline on Home screen explaining what PesaBook does
+
+24 Sep 2026:
+- Showed app to juice shop owner. He asked about M-Pesa payment
+  prompts (STK Push). Logged as requested feature, not building.
+
+26 Sep 2026:
+- Sent app to a duka owner through a mutual friend with no message.
+  He downloaded it and started using it daily.
+
+28 Sep 2026:
+- Fixed debt age to count calendar days (was counting hours)
+- Made Shop Setup payment details optional
+- Met the duka user on the road. He called me "developer" and
+  showed the app to his motorbike friends unprompted.
 
 ---
 
-## 11. THE HARD TRUTH TO REMEMBER
+## 12. WHAT REAL USERS ARE TELLING US
+
+This is evidence, not opinion. Update every session.
+
+**Duka / motorbike circle (same plot) — September 2026:**
+
+- Uses PesaBook daily since 26 Sep 2026
+- Called me "developer" when we met on the road
+- Showed the app to other motorbike riders unprompted
+- One rider PAID OFF A DEBT specifically to stop being "number one"
+  on the list. Nobody reminded him. Nobody messaged him. He just
+  didn't want to be at the top of the list.
+  → THIS IS THE MOST IMPORTANT FINDING. Social pressure from
+  sorting by debt amount changes payment behaviour. It fell out
+  of the "sort by highest debt" feature by accident.
+- Two users have asked if the app is on Play Store
+- One asked if the app can send M-Pesa payment prompts (STK Push)
+
+**Juice shop owner (24 Sep 2026):**
+
+- Asked if the app can send M-Pesa prompts instead of just
+  recording payments
+- Did not explicitly say whether the current app was useful to him
+- NOTE: juice shops are usually pay-on-the-spot, not credit-based.
+  He may not be the right user. He might have been asking about a
+  different pain point (payment collection, not credit tracking).
+
+---
+
+## 13. THE HARD TRUTH TO REMEMBER
 
 The idea is fine. The execution is on track. The technical work is
-largely done.
+largely done. There is at least one real daily user.
 
 The remaining risks are not technical:
-- Not showing the app to real users out of fear.
-- Building features users didn't ask for.
+- NOT BUILDING BACKUP. If the duka user loses his phone, he loses
+  everything and never trusts the app again. This is the #1 risk.
+- Not showing the app to more credit-selling shops.
 - Losing the keystore / key.properties (see Section 4).
-- Handing the app to real shopkeepers before backup exists.
+- Building features users didn't ask for.
 
 The goal is not to become a millionaire. The goal is to build
-something real Kenyan shopkeepers actually use. The app is at the
-point where showing it to people is more valuable than adding
-features. Do that first. Then build what they tell you to build.
+something real Kenyan shopkeepers actually use. One person is
+already using it daily and telling his friends. That is progress.
 
 ---
 
-## 12. HOW TO START A NEW AI SESSION
+## 14. HOW TO START A NEW AI SESSION
 
 Paste the whole file. Then say what you want to do next.
 The AI will not remember you otherwise. This file is the memory.
