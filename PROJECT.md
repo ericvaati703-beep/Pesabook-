@@ -1,6 +1,6 @@
 # PesaBook — Project Memory
 
-Last updated: 28 September 2026
+Last updated: 29 September 2026
 
 ---
 
@@ -35,6 +35,7 @@ Known testers and users:
 - Juice shop owner — asked about M-Pesa payment prompts (logged)
 - A teacher who requested the APK — not yet delivered
 - A shop owner who said "busy" — approached twice, not yet engaged
+- A kiosk owner (same area) — witnessed a debt dispute, not yet shown
 
 PITCH (Swahili, memorize):
 "Ni kitabu cha deni kwa simu — unaandika nani anakudai na pesa
@@ -60,6 +61,8 @@ Packages:
 - cupertino_icons ^1.0.8
 - url_launcher ^6.3.0
 - shared_preferences ^2.5.3
+- path_provider ^2.1.6
+- share_plus ^13.3.0
 - flutter_lints ^6.0.0
 - flutter_launcher_icons ^0.14.4 (dev)
 
@@ -70,7 +73,14 @@ Build command:
 C:\flutter\bin\flutter.bat build apk
 Output:
 build\app\outputs\flutter-apk\app-release.apk
-Last known APK size: 47.2 MB (STILL TOO BIG — see next actions)
+Last known APK size: 48.1 MB (STILL TOO BIG — see next actions)
+
+IMPORTANT BUILD NOTE: compileSdk in android/app/build.gradle.kts is
+pinned to 36 (not flutter.compileSdkVersion). The school computer
+had SDK 36 already installed but not SDK 35, and Flutter tried to
+download 35 which took 30+ minutes. Pinning to 36 avoids the
+download. If a build ever fails with an SDK version error, that
+line is the first place to look.
 
 GitHub: https://github.com/ericvaati703-beep/Pesabook-.git
 Branch: main
@@ -129,6 +139,9 @@ IMPORTANT: If you ever build on a DIFFERENT computer, you must:
 - App icon (PB wordmark on purple background)
 - Release builds signed with PesaBook keystore
 - Tagline on Home screen explaining what PesaBook does
+- BACKUP (export only): "Back up now" button in Shop Setup creates a
+  JSON file and opens Android share sheet. Tested — file contains
+  full shop, customer, and transaction data.
 
 ---
 
@@ -147,39 +160,44 @@ FIXED (do not redo):
 
 STILL OPEN (priority order):
 
-1. No backup/export feature. **THIS IS THE NEXT REAL FEATURE.**
-   If a shopkeeper's phone breaks, or they reinstall the app, all
-   records vanish. This is the biggest trust risk for real users.
-   A duka user is now using the app daily. If his phone breaks,
-   he loses everything and never trusts the app again.
+1. NO RESTORE FEATURE. **THIS IS THE NEXT TASK.**
+   Backup export works. But there is no way to load a backup file
+   back into the app yet. So if a user loses their phone, they have
+   the file but cannot recover the data. This is the missing half.
+   Design decisions already made:
+    - Restore button in Shop Setup, below Backup
+    - Replace mode, not merge (simpler, fewer bug surfaces)
+    - Reads the .json file, validates "app": "PesaBook", loads data
+    - Confirmation dialog showing backup date and customer count
 
-2. "Balance: KES X" label in transaction history is ambiguous.
+2. No automatic backup reminder.
+   Decided 29 Sep: don't build yet. Users haven't complained about
+   forgetting to back up. Revisit when evidence appears.
+
+3. "Balance: KES X" label in transaction history is ambiguous.
    It means balance AFTER that transaction, not current balance.
    Rename to "Remaining: KES X" or "After: KES X".
 
-3. APK is 47.2 MB. Too large for WhatsApp sharing on limited data.
-   Try: flutter build apk --split-per-abi
-   Or: flutter build apk --target-platform android-arm64
+4. APK is 48.1 MB. Too large for WhatsApp sharing on limited data.
+   Try: flutter build apk --target-platform android-arm64
    (check size first, then decide)
 
-4. No record that a reminder was sent.
+5. No record that a reminder was sent.
    Decided 22 Sep: don't build unless a real user asks.
 
-5. No transaction edit/delete.
+6. No transaction edit/delete.
    DECISION (16 Sep): Do NOT add general edit/delete. Instead:
-   - Confirmation dialog before save (DONE)
-   - Later: undo last transaction within a short window
-   - Much later: Adjustment transaction type for legitimate corrections
-     Reason: an editable money ledger can be doubted.
+    - Confirmation dialog before save (DONE)
+    - Later: undo last transaction within a short window
+    - Much later: Adjustment transaction type for legitimate corrections
+      Reason: an editable money ledger can be doubted.
 
-6. SharedPreferences may need migration to SQLite eventually.
-   It was designed for key-value flags, not money ledgers. Risk of
-   data loss at scale. Not urgent for now, but plan for it before
-   real users trust it with large amounts of money.
+7. SharedPreferences may need migration to SQLite eventually.
+   Risk of data loss at scale. Not urgent. Plan before real users
+   trust it with large amounts of money.
 
-7. Icon source image was not square (999x642), so the launcher
+8. Icon source image was not square (999x642), so the launcher
    icon has white bands on the sides. Works, but slightly unpolished.
-   Fix later with a square source PNG.
 
 ---
 
@@ -201,9 +219,9 @@ Logged because real users asked. Do NOT build without more evidence.
 - **Play Store distribution.**
   Requested by: two separate users (duka guy + motorbike rider).
   Cost: $25 one-time Google developer registration.
-  Requires: signed APK (DONE) + backup feature (NOT DONE) +
+  Requires: signed APK (DONE) + RESTORE feature (NOT DONE) +
   privacy policy + store listing.
-  Do this AFTER backup exists. No point listing on Play Store if
+  Do this AFTER restore exists. No point listing on Play Store if
   users can lose their data on reinstall.
 
 ---
@@ -211,14 +229,14 @@ Logged because real users asked. Do NOT build without more evidence.
 ## 8. NEXT ACTIONS (in order)
 
 1. Update PROJECT.md after every session.
-2. **Build backup/export feature** (item 1 in Section 6).
-   This unblocks Play Store and protects the duka user's data.
+2. **Build the RESTORE feature** (item 1 in Section 6).
+   This completes backup+restore and unblocks Play Store.
 3. Show the app to 2-3 more credit-selling shops. Use the pitch.
    Ask the questions in Section 9. Write down answers.
-4. Reduce APK size (Section 6 item 3).
-5. Rename "Balance" label in transaction history (Section 6 item 2).
-6. Register Play Store developer account (after backup is done).
-7. Fix icon to square source (Section 6 item 7).
+4. Rename "Balance" label in transaction history (Section 6 item 3).
+5. Reduce APK size (Section 6 item 4).
+6. Register Play Store developer account (after restore is done).
+7. Fix icon to square source (Section 6 item 8).
 
 ---
 
@@ -253,7 +271,9 @@ Rules for asking:
 - Update this file whenever a decision is made or a bug is found.
 - When starting a new AI chat, paste this entire file first.
 - If the build fails with a memory error, check gradle.properties
-  has -Xmx2G (not -Xmx8G — school computers can't handle 8 GB).
+  has -Xmx2G (not -Xmx8G).
+- If the build hangs downloading Android SDK, check compileSdk is
+  pinned to 36 in build.gradle.kts (see Section 3).
 
 ---
 
@@ -302,6 +322,16 @@ Rules for asking:
 - Met the duka user on the road. He called me "developer" and
   showed the app to his motorbike friends unprompted.
 
+29 Sep 2026:
+- Added backup feature (export only). New file backup_service.dart.
+- Shop Setup now has a "Backup" section with "Back up now" button.
+- Installed path_provider and share_plus packages.
+- Pinned compileSdk to 36 in build.gradle.kts to avoid SDK 35
+  download (school computer had 36, not 35).
+- Tested backup: exported full data as JSON, shared to Google Drive.
+  File contains shop, customers, transactions with dates.
+- RESTORE still not built — next session.
+
 ---
 
 ## 12. WHAT REAL USERS ARE TELLING US
@@ -326,10 +356,15 @@ This is evidence, not opinion. Update every session.
 
 - Asked if the app can send M-Pesa prompts instead of just
   recording payments
-- Did not explicitly say whether the current app was useful to him
 - NOTE: juice shops are usually pay-on-the-spot, not credit-based.
-  He may not be the right user. He might have been asking about a
-  different pain point (payment collection, not credit tracking).
+  He may not be the right user.
+
+**Kiosk owner (same area, 28 Sep 2026):**
+
+- Not approached yet. Witnessed a real customer dispute over what
+  was written in her debt book. This is the exact problem PesaBook
+  solves. Plan: go back in a quiet hour, use the dispute as the
+  opening line.
 
 ---
 
@@ -339,15 +374,21 @@ The idea is fine. The execution is on track. The technical work is
 largely done. There is at least one real daily user.
 
 The remaining risks are not technical:
-- NOT BUILDING BACKUP. If the duka user loses his phone, he loses
-  everything and never trusts the app again. This is the #1 risk.
+- NOT BUILDING RESTORE. Backup exists but cannot be restored yet.
+  This is the last step before Play Store.
 - Not showing the app to more credit-selling shops.
 - Losing the keystore / key.properties (see Section 4).
 - Building features users didn't ask for.
 
+On income: PesaBook will not pay bills in the near term. There is
+no payment model, no user base, no distribution. Income must come
+from elsewhere (matatu work, jobs) while PesaBook grows slowly in
+the background. That is not failure — that is how most products are
+actually built.
+
 The goal is not to become a millionaire. The goal is to build
 something real Kenyan shopkeepers actually use. One person is
-already using it daily and telling his friends. That is progress.
+already using it daily and telling his friends.
 
 ---
 
