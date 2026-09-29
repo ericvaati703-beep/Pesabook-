@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/shop.dart';
 import '../services/storage_service.dart';
+import '../services/backup_service.dart';
 import 'home_screen.dart';
 
 class ShopSetupScreen extends StatefulWidget {
@@ -18,6 +19,7 @@ class _ShopSetupScreenState extends State<ShopSetupScreen> {
   String _paymentMethod = 'None';
 
   bool _isLoading = true;
+  bool _isBackingUp = false;
 
   @override
   void initState() {
@@ -32,7 +34,8 @@ class _ShopSetupScreenState extends State<ShopSetupScreen> {
 
     if (shop != null) {
       _shopNameController.text = shop.name;
-      _paymentMethod = shop.paymentMethod.isEmpty ? 'None' : shop.paymentMethod;
+      _paymentMethod =
+      shop.paymentMethod.isEmpty ? 'None' : shop.paymentMethod;
       _paymentNumberController.text = shop.paymentNumber;
       if (shop.accountNumber != null) {
         _accountNumberController.text = shop.accountNumber!;
@@ -147,6 +150,37 @@ class _ShopSetupScreenState extends State<ShopSetupScreen> {
     }
   }
 
+  Future<void> _backupNow() async {
+    setState(() => _isBackingUp = true);
+
+    try {
+      await BackupService.shareBackup();
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Backup created. Send it to Google Drive or email to keep '
+                'it safe.',
+          ),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Could not create backup: $e'),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isBackingUp = false);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
@@ -221,7 +255,8 @@ class _ShopSetupScreenState extends State<ShopSetupScreen> {
               const SizedBox(height: 20),
               TextField(
                 controller: _paymentNumberController,
-                keyboardType: _paymentMethod == 'M-Pesa Till Number' ||
+                keyboardType:
+                _paymentMethod == 'M-Pesa Till Number' ||
                     _paymentMethod == 'M-Pesa PayBill'
                     ? TextInputType.number
                     : TextInputType.phone,
@@ -256,6 +291,48 @@ class _ShopSetupScreenState extends State<ShopSetupScreen> {
                   'Save Shop',
                   style: TextStyle(
                     fontSize: 17,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 40),
+            const Divider(),
+            const SizedBox(height: 20),
+
+            const Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'Backup',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 10),
+
+            const Text(
+              'Save a copy of your customers and transactions so you never '
+                  'lose them. Send the file to Google Drive or email — not just '
+                  'WhatsApp — so you can recover if you lose your phone.',
+              style: TextStyle(fontSize: 14),
+            ),
+
+            const SizedBox(height: 16),
+
+            SizedBox(
+              width: double.infinity,
+              height: 55,
+              child: OutlinedButton.icon(
+                onPressed: _isBackingUp ? null : _backupNow,
+                icon: const Icon(Icons.upload_file),
+                label: Text(
+                  _isBackingUp ? 'Preparing backup...' : 'Back up now',
+                  style: const TextStyle(
+                    fontSize: 16,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
