@@ -179,7 +179,7 @@ class _CustomerScreenState extends State<CustomerScreen> {
         ),
         subtitle: Text(
           '${_formatDate(transaction.date)}\n'
-              'Balance: KES ${balanceAfter.toStringAsFixed(0)}',
+              'Remaining: KES ${balanceAfter.toStringAsFixed(0)}',
         ),
         trailing: Text(
           '${isDebt ? '+' : '-'} KES '
