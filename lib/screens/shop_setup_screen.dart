@@ -20,6 +20,7 @@ class _ShopSetupScreenState extends State<ShopSetupScreen> {
 
   bool _isLoading = true;
   bool _isBackingUp = false;
+  bool _isRestoring = false;
 
   @override
   void initState() {
@@ -181,6 +182,114 @@ class _ShopSetupScreenState extends State<ShopSetupScreen> {
     }
   }
 
+  Future<void> _restoreNow() async {
+    RestoreResult? parsed;
+
+    try {
+      parsed = await BackupService.pickAndParseBackup();
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('$e')),
+      );
+      return;
+    }
+
+    if (parsed == null) return;
+
+    if (!mounted) return;
+
+    final dateLabel = parsed.exportedAt == null
+        ? 'unknown date'
+        : _formatDate(parsed.exportedAt!);
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: const Text('Restore backup?'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'This will REPLACE all current customers and '
+                  'transactions on this phone.',
+            ),
+            const SizedBox(height: 12),
+            Text('Backup date: $dateLabel'),
+            Text('Customers: ${parsed!.customers.length}'),
+            const SizedBox(height: 12),
+            const Text(
+              'Any data not in the backup will be lost.',
+              style: TextStyle(fontWeight: FontWeight.w600),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Restore'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    if (!mounted) return;
+
+    setState(() => _isRestoring = true);
+
+    try {
+      await BackupService.applyRestore(parsed);
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Restored ${parsed.customers.length} customer(s) from backup.',
+          ),
+        ),
+      );
+
+      if (Navigator.canPop(context)) {
+        Navigator.pop(context);
+      } else {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const HomeScreen(),
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not restore: $e')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isRestoring = false);
+      }
+    }
+  }
+
+  String _formatDate(DateTime date) {
+    const months = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    ];
+    return '${date.day} ${months[date.month - 1]} ${date.year}';
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
@@ -331,6 +440,47 @@ class _ShopSetupScreenState extends State<ShopSetupScreen> {
                 icon: const Icon(Icons.upload_file),
                 label: Text(
                   _isBackingUp ? 'Preparing backup...' : 'Back up now',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 40),
+            const Divider(),
+            const SizedBox(height: 20),
+
+            const Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'Restore',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 10),
+
+            const Text(
+              'Load a backup file back into the app. Use this if you got a '
+                  'new phone or reinstalled the app.',
+              style: TextStyle(fontSize: 14),
+            ),
+
+            const SizedBox(height: 16),
+
+            SizedBox(
+              width: double.infinity,
+              height: 55,
+              child: OutlinedButton.icon(
+                onPressed: _isRestoring ? null : _restoreNow,
+                icon: const Icon(Icons.download),
+                label: Text(
+                  _isRestoring ? 'Restoring...' : 'Restore from backup',
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
