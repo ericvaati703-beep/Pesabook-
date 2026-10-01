@@ -1,6 +1,6 @@
 # PesaBook — Project Memory
 
-Last updated: 29 September 2026
+Last updated: 1 October 2026
 
 ---
 
@@ -31,10 +31,10 @@ records.
 Known testers and users:
 - Mother (shopkeeper) — early tester
 - Duka/motorbike circle in the same plot — DAILY ACTIVE USER
-  (see Section 12 for what they said)
-- Juice shop owner — asked about M-Pesa payment prompts (logged)
+  (see Section 12)
+- Juice shop owner — asked about M-Pesa prompts (logged)
 - A teacher who requested the APK — not yet delivered
-- A shop owner who said "busy" — approached twice, not yet engaged
+- A shop owner who said "busy" — approached twice, not engaged
 - A kiosk owner (same area) — witnessed a debt dispute, not yet shown
 
 PITCH (Swahili, memorize):
@@ -63,6 +63,7 @@ Packages:
 - shared_preferences ^2.5.3
 - path_provider ^2.1.6
 - share_plus ^13.3.0
+- file_picker ^12.0.0
 - flutter_lints ^6.0.0
 - flutter_launcher_icons ^0.14.4 (dev)
 
@@ -73,14 +74,19 @@ Build command:
 C:\flutter\bin\flutter.bat build apk
 Output:
 build\app\outputs\flutter-apk\app-release.apk
-Last known APK size: 48.1 MB (STILL TOO BIG — see next actions)
+Last known APK size: 48.2 MB (STILL TOO BIG — see next actions)
 
-IMPORTANT BUILD NOTE: compileSdk in android/app/build.gradle.kts is
-pinned to 36 (not flutter.compileSdkVersion). The school computer
-had SDK 36 already installed but not SDK 35, and Flutter tried to
-download 35 which took 30+ minutes. Pinning to 36 avoids the
-download. If a build ever fails with an SDK version error, that
-line is the first place to look.
+IMPORTANT BUILD NOTES:
+- compileSdk in android/app/build.gradle.kts is pinned to 36
+  (not flutter.compileSdkVersion). The school computer has SDK 36
+  but not SDK 35. Flutter was trying to download 35 which took
+  30+ minutes. Pinning to 36 avoids the download. If a build fails
+  with an SDK version error, that line is the first place to look.
+- gradle.properties has -Xmx2G (not the Flutter default -Xmx8G).
+  The school computer cannot handle an 8 GB memory request; the
+  JVM crashes and the build dies with TimeoutException.
+- First build after adding a new native package takes 15-25 minutes.
+  Subsequent builds are 3-8 minutes.
 
 GitHub: https://github.com/ericvaati703-beep/Pesabook-.git
 Branch: main
@@ -125,23 +131,25 @@ IMPORTANT: If you ever build on a DIFFERENT computer, you must:
 - Record Payment (validates numeric, > 0, cannot exceed balance)
 - Confirmation dialog before saving payment or new debt
 - Customer details screen (balance, history, edit, actions)
-- Transaction history (newest first, shows balance after each)
+- Transaction history (newest first, shows "Remaining: KES X")
 - Edit customer
 - Customers screen (search, owing section, paid section)
 - Home screen (total owed, active customers sorted by amount, search)
 - Send Reminder (WhatsApp + SMS, editable message, pulls shop details)
 - Send Reminder disabled on PAID customers
-- Shop Setup (shop name, payment method, till/paybill/pochi numbers)
+- Shop Setup (shop name, optional payment method)
 - Shop Setup loads saved values when reopened
 - Payment details optional in Shop Setup (None option added)
 - Debt age shown on each customer row ("today", "3 days", "2 months")
   — counts calendar days, not elapsed hours
-- App icon (PB wordmark on purple background)
+- App icon (PB wordmark on purple, square source, no white bands)
 - Release builds signed with PesaBook keystore
 - Tagline on Home screen explaining what PesaBook does
-- BACKUP (export only): "Back up now" button in Shop Setup creates a
-  JSON file and opens Android share sheet. Tested — file contains
-  full shop, customer, and transaction data.
+- BACKUP (export): "Back up now" in Shop Setup creates a JSON file
+  and opens Android share sheet. Tested — file landed in Google Drive.
+- RESTORE (import): "Restore from backup" in Shop Setup opens the
+  file picker, validates the JSON, and replaces local data. Tested —
+  user confirmed it works. Replace mode (not merge).
 
 ---
 
@@ -157,47 +165,40 @@ FIXED (do not redo):
 - APK required uninstall before update → signing solved this
 - Debt age counted hours instead of calendar days → fixed
 - Shop Setup blocked users without a payment method → now optional
+- "Balance" label in transaction history → renamed to "Remaining"
+- Icon had white bands (source was 999x642 rectangle) → replaced
+  with square 1024x1024 source, regenerated
+- No backup feature → backup works and tested
+- No restore feature → restore works and tested
 
 STILL OPEN (priority order):
 
-1. NO RESTORE FEATURE. **THIS IS THE NEXT TASK.**
-   Backup export works. But there is no way to load a backup file
-   back into the app yet. So if a user loses their phone, they have
-   the file but cannot recover the data. This is the missing half.
-   Design decisions already made:
-    - Restore button in Shop Setup, below Backup
-    - Replace mode, not merge (simpler, fewer bug surfaces)
-    - Reads the .json file, validates "app": "PesaBook", loads data
-    - Confirmation dialog showing backup date and customer count
+1. Play Store distribution. **NEXT MAJOR TASK.**
+   Everything needed is now in place except:
+    - Registration ($25 one-time Google developer account)
+    - Privacy policy (required by Google)
+    - Store listing text + screenshots
+      Two real users have already asked whether the app is on Play Store.
+      Do this soon — it makes distribution automatic and eliminates
+      manual APK sharing.
 
-2. No automatic backup reminder.
-   Decided 29 Sep: don't build yet. Users haven't complained about
-   forgetting to back up. Revisit when evidence appears.
-
-3. "Balance: KES X" label in transaction history is ambiguous.
-   It means balance AFTER that transaction, not current balance.
-   Rename to "Remaining: KES X" or "After: KES X".
-
-4. APK is 48.1 MB. Too large for WhatsApp sharing on limited data.
+2. APK is 48.2 MB. Too large for WhatsApp sharing on limited data.
    Try: flutter build apk --target-platform android-arm64
    (check size first, then decide)
 
-5. No record that a reminder was sent.
+3. No record that a reminder was sent.
    Decided 22 Sep: don't build unless a real user asks.
 
-6. No transaction edit/delete.
+4. No transaction edit/delete.
    DECISION (16 Sep): Do NOT add general edit/delete. Instead:
     - Confirmation dialog before save (DONE)
     - Later: undo last transaction within a short window
-    - Much later: Adjustment transaction type for legitimate corrections
+    - Much later: Adjustment transaction type
       Reason: an editable money ledger can be doubted.
 
-7. SharedPreferences may need migration to SQLite eventually.
+5. SharedPreferences may need migration to SQLite eventually.
    Risk of data loss at scale. Not urgent. Plan before real users
    trust it with large amounts of money.
-
-8. Icon source image was not square (999x642), so the launcher
-   icon has white bands on the sides. Works, but slightly unpolished.
 
 ---
 
@@ -207,36 +208,26 @@ Logged because real users asked. Do NOT build without more evidence.
 
 - **M-Pesa STK Push / payment prompts.**
   Requested by: juice shop owner (24 Sep 2026).
-  What it is: user types a customer's number, customer receives
-  an M-Pesa prompt, enters PIN, money moves.
   Why not now: requires a backend server, Daraja API production
   access, a registered business, a Paybill/Till in that business's
-  name, public HTTPS callback, hosting, and a user account system.
+  name, public HTTPS callback, hosting, and user accounts.
   This is a different product, not a feature.
-  Revisit when: multiple users ask AND there is money for hosting
-  AND a registered business exists.
 
 - **Play Store distribution.**
   Requested by: two separate users (duka guy + motorbike rider).
-  Cost: $25 one-time Google developer registration.
-  Requires: signed APK (DONE) + RESTORE feature (NOT DONE) +
-  privacy policy + store listing.
-  Do this AFTER restore exists. No point listing on Play Store if
-  users can lose their data on reinstall.
+  Now moved to Section 6 item 1 — next major task.
 
 ---
 
 ## 8. NEXT ACTIONS (in order)
 
 1. Update PROJECT.md after every session.
-2. **Build the RESTORE feature** (item 1 in Section 6).
-   This completes backup+restore and unblocks Play Store.
+2. Register Play Store developer account ($25) and publish.
+   All other blockers are now cleared.
 3. Show the app to 2-3 more credit-selling shops. Use the pitch.
    Ask the questions in Section 9. Write down answers.
-4. Rename "Balance" label in transaction history (Section 6 item 3).
-5. Reduce APK size (Section 6 item 4).
-6. Register Play Store developer account (after restore is done).
-7. Fix icon to square source (Section 6 item 8).
+4. Reduce APK size (Section 6 item 2).
+5. Add reminder logging IF a real user asks (Section 6 item 3).
 
 ---
 
@@ -271,9 +262,13 @@ Rules for asking:
 - Update this file whenever a decision is made or a bug is found.
 - When starting a new AI chat, paste this entire file first.
 - If the build fails with a memory error, check gradle.properties
-  has -Xmx2G (not -Xmx8G).
+  has -Xmx2G.
 - If the build hangs downloading Android SDK, check compileSdk is
-  pinned to 36 in build.gradle.kts (see Section 3).
+  pinned to 36 in build.gradle.kts (Section 3).
+- When renaming or refactoring files in Android Studio, watch out
+  for the "Refactoring Preview" panel. It can silently do nothing
+  if usage search is slow. When in doubt, do file operations in
+  File Explorer instead.
 
 ---
 
@@ -323,14 +318,24 @@ Rules for asking:
   showed the app to his motorbike friends unprompted.
 
 29 Sep 2026:
-- Added backup feature (export only). New file backup_service.dart.
-- Shop Setup now has a "Backup" section with "Back up now" button.
+- Added backup feature (export). New file backup_service.dart.
 - Installed path_provider and share_plus packages.
-- Pinned compileSdk to 36 in build.gradle.kts to avoid SDK 35
-  download (school computer had 36, not 35).
+- Pinned compileSdk to 36 to avoid SDK 35 download.
 - Tested backup: exported full data as JSON, shared to Google Drive.
-  File contains shop, customers, transactions with dates.
-- RESTORE still not built — next session.
+- Renamed "Balance" to "Remaining" in transaction history.
+
+30 Sep 2026:
+- Added restore feature (import). Installed file_picker (v12).
+- Added Restore section to Shop Setup.
+- Tested restore end-to-end: added a fake customer, ran restore,
+  fake customer disappeared, real data restored.
+- This completes backup+restore. Play Store is now unblocked.
+
+1 Oct 2026:
+- Replaced icon source with square PNG (was rectangle 999x642,
+  caused white bands on the sides of the launcher icon).
+- Regenerated launcher icons from the new square source.
+- Confirmed in Android Studio preview: clean PB icon, no bands.
 
 ---
 
@@ -371,20 +376,20 @@ This is evidence, not opinion. Update every session.
 ## 13. THE HARD TRUTH TO REMEMBER
 
 The idea is fine. The execution is on track. The technical work is
-largely done. There is at least one real daily user.
+largely done. Backup and restore both work. Signing works. Icon
+looks clean.
 
-The remaining risks are not technical:
-- NOT BUILDING RESTORE. Backup exists but cannot be restored yet.
-  This is the last step before Play Store.
-- Not showing the app to more credit-selling shops.
-- Losing the keystore / key.properties (see Section 4).
-- Building features users didn't ask for.
+What remains is not technical:
+- Actually registering for Play Store and publishing.
+- Showing the app to more credit-selling shops.
+- Not losing the keystore / key.properties (Section 4).
+- Not building features users didn't ask for.
 
 On income: PesaBook will not pay bills in the near term. There is
-no payment model, no user base, no distribution. Income must come
-from elsewhere (matatu work, jobs) while PesaBook grows slowly in
-the background. That is not failure — that is how most products are
-actually built.
+no payment model yet, no large user base, no distribution. Income
+must come from elsewhere (matatu work, jobs) while PesaBook grows
+slowly in the background. That is not failure — that is how most
+products are actually built.
 
 The goal is not to become a millionaire. The goal is to build
 something real Kenyan shopkeepers actually use. One person is
