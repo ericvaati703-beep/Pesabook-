@@ -1,24 +1,21 @@
-allprojects {
-    repositories {
-        google()
-        mavenCentral()
+signingConfigs {
+    create("release") {
+        if (keystorePropertiesFile.exists()) {
+            keyAlias = keystoreProperties["keyAlias"] as String
+            keyPassword = keystoreProperties["keyPassword"] as String
+            storeFile = file(keystoreProperties["storeFile"] as String)
+            storePassword = keystoreProperties["storePassword"] as String
+        }
     }
 }
 
-val newBuildDir: Directory =
-    rootProject.layout.buildDirectory
-        .dir("../../build")
-        .get()
-rootProject.layout.buildDirectory.value(newBuildDir)
-
-subprojects {
-    val newSubprojectBuildDir: Directory = newBuildDir.dir(project.name)
-    project.layout.buildDirectory.value(newSubprojectBuildDir)
-}
-subprojects {
-    project.evaluationDependsOn(":app")
-}
-
-tasks.register<Delete>("clean") {
-    delete(rootProject.layout.buildDirectory)
+buildTypes {
+    release {
+        if (keystorePropertiesFile.exists()) {
+            signingConfig = signingConfigs.getByName("release")
+        } else {
+            // Fallback for GitHub Actions or builds without the keystore
+            signingConfig = signingConfigs.getByName("debug")
+        }
+    }
 }
