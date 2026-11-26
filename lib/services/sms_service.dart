@@ -47,7 +47,26 @@ class SmsService {
       return;
     }
 
-    // The standard URI for SMS with a pre-filled message
+    // 1. Try 'smsto:' first. It is stricter and prevents WhatsApp from hijacking it.
+    final Uri smstoUri = Uri(
+      scheme: 'smsto',
+      path: cleanNumber,
+      queryParameters: {
+        'body': message,
+      },
+    );
+
+    try {
+      await launchUrl(
+        smstoUri,
+        mode: LaunchMode.platformDefault,
+      );
+      return; // If it opens successfully, stop here.
+    } catch (e) {
+      // If it fails, fall through to the standard 'sms:' scheme.
+    }
+
+    // 2. Fallback to 'sms:' if 'smsto:' fails.
     final Uri smsUri = Uri(
       scheme: 'sms',
       path: cleanNumber,
@@ -57,25 +76,10 @@ class SmsService {
     );
 
     try {
-      if (await canLaunchUrl(smsUri)) {
-        await launchUrl(
-          smsUri,
-          mode: LaunchMode.externalApplication,
-        );
-      } else {
-        // Fallback to smsto: if sms: fails
-        final Uri smstoUri = Uri(
-          scheme: 'smsto',
-          path: cleanNumber,
-          queryParameters: {
-            'body': message,
-          },
-        );
-        await launchUrl(
-          smstoUri,
-          mode: LaunchMode.externalApplication,
-        );
-      }
+      await launchUrl(
+        smsUri,
+        mode: LaunchMode.platformDefault,
+      );
     } catch (e) {
       // SMS application could not be opened.
     }
