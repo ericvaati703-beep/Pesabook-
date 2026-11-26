@@ -9,6 +9,6 @@ jobs:
         with: { distribution: temurin, java-version: 17 }
       - uses: subosito/flutter-action@v2
         with: { channel: stable }
-      - run: flutter build apk --debug
+      - run: flutter build apk --release
       - uses: actions/upload-artifact@v4
-        with: { name: pesabook-apk, path: build/app/outputs/flutter-apk/app-debug.apk }
+        with: { name: pesabook-apk, path: build/app/outputs/flutter-apk/app-release.apk }
