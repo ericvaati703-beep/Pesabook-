@@ -1,11 +1,6 @@
-import 'package:flutter/foundation.dart';
-import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class SmsService {
-  static const MethodChannel _smsChannel =
-  MethodChannel('com.example.pesabook1/sms');
-
   static String createReminderMessage({
     required String customerName,
     required double amount,
@@ -22,17 +17,17 @@ class SmsService {
       message += '\n\n$shopName';
     }
 
-    if (paymentMethod == 'M-Pesa Till Number') {
+    if (paymentMethod == 'M-Pesa Till Number' && paymentNumber != null) {
       message += '\nTill Number: $paymentNumber';
-    } else if (paymentMethod == 'M-Pesa PayBill') {
+    } else if (paymentMethod == 'M-Pesa PayBill' && paymentNumber != null) {
       message += '\nPayBill Business Number: $paymentNumber';
 
       if (accountNumber != null && accountNumber.trim().isNotEmpty) {
         message += '\nAccount Number: $accountNumber';
       }
-    } else if (paymentMethod == 'Pochi la Biashara') {
+    } else if (paymentMethod == 'Pochi la Biashara' && paymentNumber != null) {
       message += '\nPochi la Biashara: $paymentNumber';
-    } else if (paymentMethod == 'Phone Number') {
+    } else if (paymentMethod == 'Phone Number' && paymentNumber != null) {
       message += '\nPhone Number: $paymentNumber';
     }
 
@@ -52,27 +47,7 @@ class SmsService {
       return;
     }
 
-    // Android: use the native SMS intent.
-    if (defaultTargetPlatform == TargetPlatform.android) {
-      try {
-        final bool opened = await _smsChannel.invokeMethod<bool>(
-          'openSms',
-          {
-            'phoneNumber': cleanNumber,
-            'message': message,
-          },
-        ) ??
-            false;
-
-        if (opened) {
-          return;
-        }
-      } catch (e) {
-        // Fall through to the normal sms: URL.
-      }
-    }
-
-    // Fallback for other platforms such as Chrome.
+    // The standard URI for SMS with a pre-filled message
     final Uri smsUri = Uri(
       scheme: 'sms',
       path: cleanNumber,
@@ -85,6 +60,19 @@ class SmsService {
       if (await canLaunchUrl(smsUri)) {
         await launchUrl(
           smsUri,
+          mode: LaunchMode.externalApplication,
+        );
+      } else {
+        // Fallback to smsto: if sms: fails
+        final Uri smstoUri = Uri(
+          scheme: 'smsto',
+          path: cleanNumber,
+          queryParameters: {
+            'body': message,
+          },
+        );
+        await launchUrl(
+          smstoUri,
           mode: LaunchMode.externalApplication,
         );
       }
